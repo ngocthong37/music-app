@@ -1,5 +1,6 @@
 package com.vanvan.musicapp.entity;
 
+import com.vanvan.musicapp.Enum.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -29,7 +30,5 @@ public class User {
 
     private Date createdAt;
 
-    public enum Role {
-        CUSTOMER, ADMIN
-    }
+
 }

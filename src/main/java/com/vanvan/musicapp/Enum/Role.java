@@ -26,17 +26,7 @@ public enum Role {
                     Permission.ADMIN_DELETE,
                     Permission.ADMIN_CREATE
             )
-    ),
-    EMPLOYEE(
-            Set.of(
-                    Permission.EMPLOYEE_READ,
-                    Permission.EMPLOYEE_UPDATE,
-                    Permission.EMPLOYEE_DELETE,
-                    Permission.EMPLOYEE_CREATE
-            )
-    )
-
-    ;
+    );
 
     @Getter
     private final Set<Permission> permissions;

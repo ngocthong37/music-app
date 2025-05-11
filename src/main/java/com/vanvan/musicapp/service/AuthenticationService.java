@@ -5,8 +5,6 @@ import com.vanvan.musicapp.entity.Token;
 import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.Enum.Role;
 import com.vanvan.musicapp.Enum.TokenType;
-import com.vanvan.musicapp.repository.AccountRepository;
-import com.vanvan.musicapp.repository.CustomerRepository;
 import com.vanvan.musicapp.repository.TokenRepository;
 import com.vanvan.musicapp.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;

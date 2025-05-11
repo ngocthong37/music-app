@@ -1,6 +1,5 @@
 package com.vanvan.musicapp.security;
 
-import com.vanvan.musicapp.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

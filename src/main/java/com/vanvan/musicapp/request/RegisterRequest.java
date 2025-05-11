@@ -1,6 +1,6 @@
 package com.vanvan.musicapp.request;
 
-import com.quocluan.kdmaylanh.Enum.Role;
+import com.vanvan.musicapp.Enum.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
