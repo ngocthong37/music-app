@@ -26,6 +26,7 @@ public class SongService {
     private final SongRepository songRepository;
     private final ArtistRepository artistRepository;
     private final GenreRepository genreRepository;
+    private final StorageService storageService;
 
     public Song createSong(String title, Integer artistId, Integer genreId, int duration, String lyrics, MultipartFile file) {
         Artist artist = artistRepository.findById(artistId)
@@ -87,6 +88,12 @@ public class SongService {
 
     public List<Song> getAllSongs() {
         return songRepository.findAll();
+    }
+
+    public String uploadImage(MultipartFile file, String namePath, Integer serviceHairId) {
+        String imageUrl = storageService.uploadImages(file, namePath);
+        songRepository.updateImage(imageUrl, serviceHairId);
+        return imageUrl;
     }
 
 }

@@ -49,4 +49,10 @@ public class SongAdminController {
         List<Song> songs = songService.getAllSongs();
         return ResponseEntity.ok(songs);
     }
+
+    @PostMapping("/upload-image-song")
+    public String uploadImageSong(@RequestParam("namePath") String namePath, @RequestParam("file") MultipartFile file,
+                                         @RequestParam("songId") Integer productItemId) {
+        return songService.uploadImage(file, namePath, productItemId);
+    }
 }

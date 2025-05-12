@@ -28,6 +28,8 @@ public class Song {
 
     private String fileUrl;
 
+    private String imageUrl;
+
     @Lob
     private String lyrics;
 
