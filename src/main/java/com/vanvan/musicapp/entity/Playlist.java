@@ -1,18 +1,15 @@
 package com.vanvan.musicapp.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.Date;
-import java.util.UUID;
 
 @Entity
 @Table(name = "playlists")
 public class Playlist {
     @Id
-    private UUID playlistId;
+    @GeneratedValue
+    private Integer id;
 
     @ManyToOne
     private User user;

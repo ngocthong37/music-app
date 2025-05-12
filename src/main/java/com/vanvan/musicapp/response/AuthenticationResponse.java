@@ -17,6 +17,6 @@ public class AuthenticationResponse {
   @JsonProperty("refresh_token")
   private String refreshToken;
   private String role;
-  private Integer accountId;
+  private Integer userId;
 
 }

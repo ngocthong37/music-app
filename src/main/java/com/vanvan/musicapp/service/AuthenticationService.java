@@ -1,16 +1,20 @@
 package com.vanvan.musicapp.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vanvan.musicapp.entity.Token;
-import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.Enum.Role;
 import com.vanvan.musicapp.Enum.TokenType;
+import com.vanvan.musicapp.entity.Token;
+import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.TokenRepository;
+import com.vanvan.musicapp.repository.UserRepository;
+import com.vanvan.musicapp.request.AuthenticationRequest;
+import com.vanvan.musicapp.request.RegisterRequest;
+import com.vanvan.musicapp.response.AuthenticationResponse;
+import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,35 +30,26 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final AccountRepository repository;
+    private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private CustomerRepository customerRepository;
-
     public AuthenticationResponse register(RegisterRequest request) {
-        var account = Account.builder()
+        var user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .roleID(Role.valueOf("CUSTOMER"))
+                .role(Role.valueOf(String.valueOf(request.getRole())))
                 .build();
-        Customer customer = new Customer();
-        customer.setName(request.getName());
-        customer.setEmail(request.getEmail());
-        Customer savedCustomer = customerRepository.save(customer);
-        account.setCustomer(savedCustomer);
-        account.setStatus("Active");
-        var savedAccount = repository.save(account);
-        var jwtToken = jwtService.generateToken(savedAccount);
-        var refreshToken = jwtService.generateRefreshToken(savedAccount);
+        User savedUser = userRepository.save(user);
+        var jwtToken = jwtService.generateToken(savedUser);
+        var refreshToken = jwtService.generateRefreshToken(savedUser);
 
-        saveAccountToken(savedAccount, jwtToken);
+        saveUserToken(savedUser, jwtToken);
         return AuthenticationResponse.builder()
-                .role(savedAccount.getRoleID().toString())
-                .accountId(savedAccount.getAccountID())
+                .role(savedUser.getRole().toString())
+                .userId(user.getId())
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
@@ -68,32 +63,32 @@ public class AuthenticationService {
                         request.getPassword()
                 )
         );
-        var account = repository.findByEmail(request.getEmail())
+        var account = userRepository.findByEmail(request.getEmail())
                 .orElseThrow();
         String status = account.getStatus();
-        if (status.equals("locked")) {
+        if (status != null && status.equals("locked")) {
             return AuthenticationResponse.builder()
                     .accessToken(null)
                     .refreshToken(null)
                     .role(null)
-                    .accountId(null)
+                    .userId(null)
                     .build();
         }
         var jwtToken = jwtService.generateToken(account);
         var refreshToken = jwtService.generateRefreshToken(account);
         revokeAllUserTokens(account);
-        saveAccountToken(account, jwtToken);
+        saveUserToken(account, jwtToken);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
-                .role(String.valueOf(account.getRoleID()))
-                .accountId(account.getAccountID())
+                .role(String.valueOf(account.getRole()))
+                .userId(account.getId())
                 .build();
     }
 
-    private void saveAccountToken(Account account, String jwtToken) {
+    private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()
-                .account(account)
+                .user(user)
                 .token(jwtToken)
                 .tokenType(TokenType.BEARER)
                 .expired(false)
@@ -102,8 +97,8 @@ public class AuthenticationService {
         tokenRepository.save(token);
     }
 
-    private void revokeAllUserTokens(Account account) {
-        var validAccountTokens = tokenRepository.findAllValidTokenByUser(account.getAccountID());
+    private void revokeAllUserTokens(User user) {
+        var validAccountTokens = tokenRepository.findAllValidTokenByUser(user.getId());
         if (validAccountTokens.isEmpty())
             return;
         validAccountTokens.forEach(token -> {
@@ -130,19 +125,19 @@ public class AuthenticationService {
     ) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String refreshToken;
-        final String accountEmail;
+        final String userEmail;
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return;
         }
         refreshToken = authHeader.substring(7);
-        accountEmail = jwtService.extractUsername(refreshToken);
-        if (accountEmail != null) {
-            var account = this.repository.findByEmail(accountEmail)
+        userEmail = jwtService.extractUsername(refreshToken);
+        if (userEmail != null) {
+            var account = this.userRepository.findByEmail(userEmail)
                     .orElseThrow();
             if (jwtService.isTokenValid(refreshToken, account)) {
                 var accessToken = jwtService.generateToken(account);
                 revokeAllUserTokens(account);
-                saveAccountToken(account, accessToken);
+                saveUserToken(account, accessToken);
                 var authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)

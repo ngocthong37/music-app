@@ -13,11 +13,11 @@ import java.util.UUID;
 public class ListeningCount {
     @Id
     @GeneratedValue
-    private Long id;
+    private Integer id;
 
-    private UUID songId;
+    private Integer songId;
 
-    private UUID userId;
+    private Integer userId;
 
     private Date listenTime;
 

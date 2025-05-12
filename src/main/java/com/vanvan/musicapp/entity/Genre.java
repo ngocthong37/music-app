@@ -1,17 +1,13 @@
 package com.vanvan.musicapp.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-import java.util.UUID;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "genres")
 public class Genre {
     @Id
-    private UUID genreId;
+    @GeneratedValue
+    private Integer id;
 
     @Column(length = 50)
     private String name;

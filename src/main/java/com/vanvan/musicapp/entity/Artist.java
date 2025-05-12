@@ -2,13 +2,12 @@ package com.vanvan.musicapp.entity;
 
 import jakarta.persistence.*;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "artists")
 public class Artist {
     @Id
-    private UUID artistId;
+    @GeneratedValue
+    private Integer id;
 
     @Column(length = 100)
     private String name;

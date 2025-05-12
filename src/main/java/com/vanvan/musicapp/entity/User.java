@@ -2,19 +2,25 @@ package com.vanvan.musicapp.entity;
 
 import com.vanvan.musicapp.Enum.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.Date;
-import java.util.UUID;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+@Builder
+@Setter
+@Getter
+public class User implements UserDetails {
     @Id
-    private UUID userId;
+    @GeneratedValue
+    private Integer id;
 
     @Column(unique = true, length = 50)
     private String username;
@@ -25,10 +31,46 @@ public class User {
     @Column(unique = true, length = 100)
     private String email;
 
+    private String status;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
     private Date createdAt;
 
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
