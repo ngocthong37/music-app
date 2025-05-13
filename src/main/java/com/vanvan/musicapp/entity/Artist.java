@@ -1,9 +1,15 @@
 package com.vanvan.musicapp.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Table(name = "artists")
+@Getter
+@Setter
 public class Artist {
     @Id
     @GeneratedValue
@@ -14,4 +20,8 @@ public class Artist {
 
     @Lob
     private String bio;
+
+    @OneToMany(mappedBy = "artist")
+    private List<Song> songs;
+
 }

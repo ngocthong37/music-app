@@ -12,17 +12,20 @@ import java.util.Date;
 @Getter
 public class Song {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(length = 100)
     private String title;
 
     @ManyToOne
+    @JoinColumn(name = "artist_id")
     private Artist artist;
 
     @ManyToOne
+    @JoinColumn(name = "genre_id")
     private Genre genre;
+
 
     private int duration;
 
