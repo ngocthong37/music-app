@@ -19,7 +19,7 @@ import java.util.List;
 @Getter
 public class User implements UserDetails {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(unique = true, length = 50)

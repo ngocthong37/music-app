@@ -1,0 +1,8 @@
+package com.vanvan.musicapp.request;
+
+import lombok.Data;
+
+@Data
+public class CreateGenreRequest {
+    private String name;
+}

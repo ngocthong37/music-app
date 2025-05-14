@@ -19,4 +19,8 @@ public interface SongRepository extends JpaRepository<Song, Integer> {
             "OR LOWER(s.artist.name) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Song> searchByTitleOrArtistName(@Param("keyword") String keyword);
 
+    List<Song> findByGenreId(Integer genreId);
+    List<Song> findByArtistId(Integer artistId);
+    List<Song> findByIdNotIn(List<Integer> songIds);
+
 }

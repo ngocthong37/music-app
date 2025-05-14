@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 
 @RestController
-@RequestMapping("/api/v1/music")
+@RequestMapping("/api/v1/musics")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class MusicController {

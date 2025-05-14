@@ -38,14 +38,12 @@ public class AlbumService {
             Genre genre = null;
             if (request.getGenreId() != null) {
                 Optional<Genre> optionalGenre = genreRepository.findById(request.getGenreId());
-                if (optionalGenre.isPresent()) {
-                    genre = optionalGenre.get();
-                } else {
+                if (optionalGenre.isEmpty()) {
                     return new ResponseObject("error", "Genre not found", null);
                 }
+                genre = optionalGenre.get();
             }
 
-            // Tạo album mới
             Album album = new Album();
             album.setTitle(request.getTitle());
             album.setCoverImageUrl(request.getCoverImageUrl());
@@ -57,14 +55,13 @@ public class AlbumService {
             if (request.getSongIds() != null && !request.getSongIds().isEmpty()) {
                 for (Integer songId : request.getSongIds()) {
                     Optional<Song> song = songRepository.findById(songId);
-                    if (song.isPresent()) {
-                        AlbumSong albumSong = new AlbumSong();
-                        albumSong.setAlbumId(savedAlbum.getId());
-                        albumSong.setSongId(songId);
-                        albumSongRepository.save(albumSong);
-                    } else {
+                    if (song.isEmpty()) {
                         return new ResponseObject("error", "Song with ID " + songId + " not found", null);
                     }
+                    AlbumSong albumSong = new AlbumSong();
+                    albumSong.setAlbumId(savedAlbum.getId());
+                    albumSong.setSongId(songId);
+                    albumSongRepository.save(albumSong);
                 }
             }
 
@@ -83,9 +80,8 @@ public class AlbumService {
                     album.getTitle(),
                     album.getCoverImageUrl(),
                     album.getCreatedAt(),
-                    album.getGenre().getName()
+                    album.getGenre() != null ? album.getGenre().getName() : null
             )).collect(Collectors.toList());
-
 
             return new ResponseObject("success", "Albums fetched successfully", albumResponses);
         } catch (Exception e) {
@@ -111,13 +107,15 @@ public class AlbumService {
                     return new SongResponse(
                             song.getId(),
                             song.getTitle(),
-                            song.getArtist() != null ? song.getArtist().getName() : null,
+                            song.getArtist() != null ? song.getArtist().getId() : null,
                             song.getDuration(),
-                            song.getFileUrl()
+                            song.getFileUrl(),
+                            song.getImageUrl(),
+                            song.getGenre().getId()
                     );
                 })
                 .filter(Objects::nonNull)
-                .toList();
+                .collect(Collectors.toList());
 
         AlbumDetailResponse response = new AlbumDetailResponse(
                 album.getId(),
@@ -137,5 +135,64 @@ public class AlbumService {
         return imageUrl;
     }
 
+    public ResponseObject updateAlbum(Integer id, CreateAlbumRequest request) {
+        try {
+            Optional<Album> optionalAlbum = albumRepository.findById(id);
+            if (optionalAlbum.isEmpty()) {
+                return new ResponseObject("error", "Album not found", null);
+            }
 
+            Album album = optionalAlbum.get();
+
+            Genre genre = null;
+            if (request.getGenreId() != null) {
+                Optional<Genre> optionalGenre = genreRepository.findById(request.getGenreId());
+                if (optionalGenre.isEmpty()) {
+                    return new ResponseObject("error", "Genre not found", null);
+                }
+                genre = optionalGenre.get();
+            }
+
+            album.setTitle(request.getTitle());
+            album.setCoverImageUrl(request.getCoverImageUrl());
+            album.setGenre(genre);
+
+            albumRepository.save(album);
+
+            albumSongRepository.deleteByAlbumId(id);
+
+            if (request.getSongIds() != null && !request.getSongIds().isEmpty()) {
+                for (Integer songId : request.getSongIds()) {
+                    Optional<Song> song = songRepository.findById(songId);
+                    if (song.isEmpty()) {
+                        return new ResponseObject("error", "Song with ID " + songId + " not found", null);
+                    }
+                    AlbumSong albumSong = new AlbumSong();
+                    albumSong.setAlbumId(id);
+                    albumSong.setSongId(songId);
+                    albumSongRepository.save(albumSong);
+                }
+            }
+
+            return new ResponseObject("success", "Album updated successfully", id);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to update album: " + e.getMessage(), null);
+        }
+    }
+
+    public ResponseObject deleteAlbum(Integer id) {
+        try {
+            Optional<Album> optionalAlbum = albumRepository.findById(id);
+            if (optionalAlbum.isEmpty()) {
+                return new ResponseObject("error", "Album not found", null);
+            }
+
+            albumSongRepository.deleteByAlbumId(id);
+            albumRepository.deleteById(id);
+
+            return new ResponseObject("success", "Album deleted successfully", null);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to delete album: " + e.getMessage(), null);
+        }
+    }
 }

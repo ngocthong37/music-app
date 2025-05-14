@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface AlbumSongRepository extends JpaRepository<AlbumSong, AlbumSongId> {
     List<AlbumSong> findByAlbumId(Integer albumId);
+    void deleteByAlbumId(Integer albumId);
 }

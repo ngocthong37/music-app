@@ -1,15 +1,18 @@
-package com.vanvan.musicapp.response;
+    package com.vanvan.musicapp.response;
 
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
+    import lombok.AllArgsConstructor;
+    import lombok.Data;
+    import lombok.NoArgsConstructor;
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public class SongResponse {
         private Integer id;
         private String title;
-        private String artistName;
+        private Integer artistId;
         private int duration;
         private String fileUrl;
+        private String imageUrl;
+        private Integer genreId;
     }

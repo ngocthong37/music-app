@@ -7,6 +7,8 @@ import com.vanvan.musicapp.repository.ArtistRepository;
 import com.vanvan.musicapp.repository.GenreRepository;
 import com.vanvan.musicapp.repository.SongRepository;
 import com.vanvan.musicapp.request.SongRequest;
+import com.vanvan.musicapp.response.ResponseObject;
+import com.vanvan.musicapp.response.SongResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +31,7 @@ public class SongService {
     private final GenreRepository genreRepository;
     private final StorageService storageService;
 
-    public Song createSong(String title, Integer artistId, Integer genreId, int duration, String lyrics, MultipartFile file) {
+    public ResponseObject createSong(String title, Integer artistId, Integer genreId, int duration, String lyrics, MultipartFile file) {
         Artist artist = artistRepository.findById(artistId)
                 .orElseThrow(() -> new RuntimeException("Artist not found"));
         Genre genre = genreRepository.findById(genreId)
@@ -49,20 +52,21 @@ public class SongService {
             Path filePath = uploadDir.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            // Lưu fileUrl theo API endpoint
             Song song = new Song();
             song.setTitle(title);
             song.setArtist(artist);
             song.setGenre(genre);
             song.setDuration(duration);
-            song.setFileUrl("/api/v1/music/" + fileName);  // dùng đúng API mapping
+            song.setFileUrl("/api/v1/musics/" + fileName);
             song.setLyrics(lyrics);
             song.setCreatedAt(new Date());
 
-            return songRepository.save(song);
+            Song savedSong = songRepository.save(song);
 
-        } catch (IOException e) {
-            throw new RuntimeException("Error saving file", e);
+            return new ResponseObject("success", "song created successfully", savedSong.getId());
+
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to create album: " + e.getMessage(), null);
         }
     }
 
@@ -86,14 +90,51 @@ public class SongService {
         songRepository.deleteById(id);
     }
 
-    public List<Song> getAllSongs() {
-        return songRepository.findAll();
+    public ResponseObject getAllSongs() {
+        try {
+            List<Song> songs = songRepository.findAll();
+            List<SongResponse> songResponses = songs.stream().map(song -> new SongResponse(
+                    song.getId(),
+                    song.getTitle(),
+                    song.getArtist() != null ? song.getArtist().getId() : null,
+                    song.getDuration(),
+                    song.getFileUrl(),
+                    song.getImageUrl(),
+                    song.getGenre().getId()
+
+            )).collect(Collectors.toList());
+
+            return new ResponseObject("success", "Songs fetched successfully", songResponses);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to fetch songs: " + e.getMessage(), null);
+        }
     }
 
-    public String uploadImage(MultipartFile file, String namePath, Integer serviceHairId) {
+
+    public String uploadImage(MultipartFile file, String namePath, Integer songId) {
         String imageUrl = storageService.uploadImages(file, namePath);
-        songRepository.updateImage(imageUrl, serviceHairId);
+        songRepository.updateImage(imageUrl, songId);
         return imageUrl;
     }
+
+    public ResponseObject searchSongs(String keyword) {
+        try {
+            List<Song> songs = songRepository.searchByTitleOrArtistName(keyword);
+            List<SongResponse> responses = songs.stream().map(song -> new SongResponse(
+                    song.getId(),
+                    song.getTitle(),
+                    song.getArtist() != null ? song.getArtist().getId() : null,
+                    song.getDuration(),
+                    song.getFileUrl(),
+                    song.getImageUrl(),
+                    song.getGenre().getId()
+            )).collect(Collectors.toList());
+
+            return new ResponseObject("success", "Songs found", responses);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Search failed: " + e.getMessage(), null);
+        }
+    }
+
 
 }

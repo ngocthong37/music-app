@@ -1,0 +1,121 @@
+package com.vanvan.musicapp.service;
+
+import com.vanvan.musicapp.entity.ListeningCount;
+import com.vanvan.musicapp.entity.Song;
+import com.vanvan.musicapp.repository.ListeningCountRepository;
+import com.vanvan.musicapp.repository.SongRepository;
+import com.vanvan.musicapp.repository.UserRepository;
+import com.vanvan.musicapp.response.ListeningCountResponse;
+import com.vanvan.musicapp.response.ResponseObject;
+import com.vanvan.musicapp.response.SongResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ListeningCountService {
+    private final ListeningCountRepository listeningCountRepository;
+    private final UserRepository userRepository;
+    private final SongRepository songRepository;
+
+    public ResponseObject incrementListeningCount(Integer userId, Integer songId) {
+        try {
+            userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            Song song = songRepository.findById(songId)
+                    .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
+
+            ListeningCount listeningCount = listeningCountRepository.findByUserIdAndSongId(userId, songId)
+                    .orElse(new ListeningCount());
+
+            listeningCount.setUserId(userId);
+            listeningCount.setSongId(songId);
+            listeningCount.setCount(listeningCount.getCount() + 1);
+            listeningCount.setListenTime(new Date());
+
+            ListeningCount savedCount = listeningCountRepository.save(listeningCount);
+
+            SongResponse songResponse = new SongResponse(
+                    song.getId(),
+                    song.getTitle(),
+                    song.getArtist().getId(),
+                    song.getDuration(),
+                    song.getFileUrl(),
+                    song.getImageUrl(),
+                    song.getGenre().getId()
+            );
+
+            ListeningCountResponse response = new ListeningCountResponse();
+            response.setId(savedCount.getId());
+            response.setSong(songResponse);
+            response.setCount(savedCount.getCount());
+            response.setListenTime(savedCount.getListenTime());
+
+            return new ResponseObject("success", "Tăng lượt nghe thành công", response);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Tăng lượt nghe thất bại: " + e.getMessage(), null);
+        }
+    }
+
+    public ResponseObject getListeningCountsByUserId(Integer userId) {
+        try {
+            userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+            List<ListeningCount> listeningCounts = listeningCountRepository.findByUserId(userId);
+            List<ListeningCountResponse> responses = listeningCounts.stream()
+                    .map(count -> {
+                        Song song = songRepository.findById(count.getSongId())
+                                .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
+                        SongResponse songResponse = new SongResponse(
+                                song.getId(),
+                                song.getTitle(),
+                                song.getArtist().getId(),
+                                song.getDuration(),
+                                song.getFileUrl(),
+                                song.getImageUrl(),
+                                song.getGenre().getId()
+                        );
+                        ListeningCountResponse response = new ListeningCountResponse();
+                        response.setId(count.getId());
+                        response.setSong(songResponse);
+                        response.setCount(count.getCount());
+                        response.setListenTime(count.getListenTime());
+                        return response;
+                    })
+                    .collect(Collectors.toList());
+            return new ResponseObject("success", "Lấy danh sách lượt nghe thành công", responses);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Lấy danh sách lượt nghe thất bại: " + e.getMessage(), null);
+        }
+    }
+
+    public ResponseObject getTop20SongsByListenCount() {
+        try {
+            List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
+            List<SongResponse> responses = topSongs.stream()
+                    .limit(20) // Giới hạn top 20
+                    .map(result -> {
+                        Integer songId = (Integer) result[0];
+                        Song song = songRepository.findById(songId)
+                                .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
+                        return new SongResponse(
+                                song.getId(),
+                                song.getTitle(),
+                                song.getArtist().getId(),
+                                song.getDuration(),
+                                song.getFileUrl(),
+                                song.getImageUrl(),
+                                song.getGenre().getId()
+                        );
+                    })
+                    .collect(Collectors.toList());
+            return new ResponseObject("success", "Lấy top 20 bài hát được nghe nhiều nhất thành công", responses);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Lấy top 20 bài hát thất bại: " + e.getMessage(), null);
+        }
+    }
+}
