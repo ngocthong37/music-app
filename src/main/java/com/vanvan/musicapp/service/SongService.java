@@ -97,10 +97,12 @@ public class SongService {
                     song.getId(),
                     song.getTitle(),
                     song.getArtist() != null ? song.getArtist().getId() : null,
+                    song.getArtist() != null ? song.getArtist().getName() : null,
                     song.getDuration(),
                     song.getFileUrl(),
                     song.getImageUrl(),
-                    song.getGenre().getId()
+                    song.getGenre().getId(),
+                    song.getGenre().getName()
 
             )).collect(Collectors.toList());
 
@@ -124,10 +126,12 @@ public class SongService {
                     song.getId(),
                     song.getTitle(),
                     song.getArtist() != null ? song.getArtist().getId() : null,
+                    song.getArtist() != null ? song.getArtist().getName() : null,
                     song.getDuration(),
                     song.getFileUrl(),
                     song.getImageUrl(),
-                    song.getGenre().getId()
+                    song.getGenre().getId(),
+                    song.getGenre().getName()
             )).collect(Collectors.toList());
 
             return new ResponseObject("success", "Songs found", responses);

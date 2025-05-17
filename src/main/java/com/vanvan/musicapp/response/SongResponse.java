@@ -11,8 +11,10 @@
         private Integer id;
         private String title;
         private Integer artistId;
+        private String artistName;
         private int duration;
         private String fileUrl;
         private String imageUrl;
         private Integer genreId;
+        private String genreName;
     }
