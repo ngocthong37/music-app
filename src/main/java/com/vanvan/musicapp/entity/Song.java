@@ -37,4 +37,6 @@ public class Song {
     private String lyrics;
 
     private Date createdAt;
+
+    private Date updatedAt;
 }

@@ -31,9 +31,18 @@ public class SongAdminController {
     }
 
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateSong(@PathVariable Integer id, @RequestBody SongRequest request) {
-        return ResponseEntity.ok(songService.updateSong(id, request));
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseObject> updateSong(
+            @PathVariable Integer id,
+            @RequestParam("title") String title,
+            @RequestParam("artistId") Integer artistId,
+            @RequestParam("genreId") Integer genreId,
+            @RequestParam("duration") int duration,
+            @RequestParam(value = "lyrics", required = false) String lyrics,
+            @RequestParam(value = "file", required = false) MultipartFile file
+    ) {
+        ResponseObject response = songService.updateSong(id, title, artistId, genreId, duration, lyrics, file);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

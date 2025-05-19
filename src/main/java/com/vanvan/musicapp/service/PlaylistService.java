@@ -132,6 +132,7 @@ public class PlaylistService {
             songResponse.setDuration(song.getDuration());
             songResponse.setArtistId(song.getArtist().getId());
             songResponse.setImageUrl(song.getImageUrl());
+            songResponse.setArtistName(song.getArtist().getName());
 //            songResponse.setOrderIndex(playlistSong.getOrderIndex());
             songResponses.add(songResponse);
         }

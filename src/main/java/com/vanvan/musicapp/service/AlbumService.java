@@ -15,6 +15,7 @@ import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.response.SongResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
@@ -137,6 +138,7 @@ public class AlbumService {
         return imageUrl;
     }
 
+    @Transactional
     public ResponseObject updateAlbum(Integer id, CreateAlbumRequest request) {
         try {
             Optional<Album> optionalAlbum = albumRepository.findById(id);

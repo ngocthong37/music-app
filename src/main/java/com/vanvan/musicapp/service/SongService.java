@@ -72,18 +72,58 @@ public class SongService {
 
 
 
-    public Song updateSong(Integer id, SongRequest req) {
+    public ResponseObject updateSong(Integer id, String title, Integer artistId, Integer genreId, int duration, String lyrics, MultipartFile file) {
+        // Tìm bài hát theo ID
         Song song = songRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Song not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài hát"));
 
-        song.setTitle(req.getTitle());
-        song.setArtist(artistRepository.findById(req.getArtistId()).orElseThrow());
-        song.setGenre(genreRepository.findById(req.getGenreId()).orElseThrow());
-        song.setDuration(req.getDuration());
-        song.setFileUrl(req.getFileUrl());
-        song.setLyrics(req.getLyrics());
+        // Tìm nghệ sĩ và thể loại
+        Artist artist = artistRepository.findById(artistId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nghệ sĩ"));
+        Genre genre = genreRepository.findById(genreId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thể loại"));
 
-        return songRepository.save(song);
+        try {
+            song.setTitle(title);
+            song.setArtist(artist);
+            song.setGenre(genre);
+            song.setDuration(duration);
+            song.setLyrics(lyrics);
+            song.setUpdatedAt(new Date());
+
+            if (file != null && !file.isEmpty()) {
+                String originalFileName = file.getOriginalFilename();
+                if (originalFileName == null || originalFileName.isBlank()) {
+                    throw new RuntimeException("Tên tệp không hợp lệ");
+                }
+
+                String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+                String fileName = System.currentTimeMillis() + "_" + title.replaceAll("[^a-zA-Z0-9]", "_") + extension;
+
+                Path uploadPath = Paths.get("uploads");
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                if (song.getFileUrl() != null && !song.getFileUrl().isBlank()) {
+                    String oldFileName = song.getFileUrl().substring(song.getFileUrl().lastIndexOf("/") + 1);
+                    Path oldFilePath = uploadPath.resolve(oldFileName);
+                    Files.deleteIfExists(oldFilePath);
+                }
+
+                Path filePath = uploadPath.resolve(fileName);
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                song.setFileUrl("/api/v1/musics/" + fileName);
+            }
+
+            Song updatedSong = songRepository.save(song);
+
+            return new ResponseObject("success", "Cập nhật bài hát thành công", updatedSong.getId());
+
+        } catch (Exception e) {
+            return new ResponseObject("error", "Lỗi khi cập nhật bài hát: " + e.getMessage(), null);
+        }
     }
 
     public void deleteSong(Integer id) {
