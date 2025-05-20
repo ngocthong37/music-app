@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -105,7 +107,6 @@ public class ListeningCountService {
                     .limit(10)
                     .map(result -> {
                         Integer songId = (Integer) result[0];
-                        Long listenCount = (Long) result[1];
                         Song song = songRepository.findById(songId)
                                 .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
                         return new SongResponse(
@@ -117,13 +118,15 @@ public class ListeningCountService {
                                 song.getFileUrl(),
                                 song.getImageUrl(),
                                 song.getGenre().getId(),
-                                song.getGenre().getName(),
-                                listenCount,
-                                null
+                                song.getGenre().getName()
                         );
                     })
                     .collect(Collectors.toList());
-            return new ResponseObject("success", "Lấy top 10 bài hát được nghe nhiều nhất thành công", responses);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("songs", responses);
+
+            return new ResponseObject("success", "Lấy top 10 bài hát được nghe nhiều nhất thành công", data);
         } catch (Exception e) {
             return new ResponseObject("error", "Lấy top 10 bài hát thất bại: " + e.getMessage(), null);
         }
