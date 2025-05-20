@@ -5,6 +5,7 @@ import com.vanvan.musicapp.entity.Song;
 import com.vanvan.musicapp.repository.ListeningCountRepository;
 import com.vanvan.musicapp.repository.SongRepository;
 import com.vanvan.musicapp.repository.UserRepository;
+import com.vanvan.musicapp.response.ArtistResponse;
 import com.vanvan.musicapp.response.ListeningCountResponse;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.response.SongResponse;
@@ -97,13 +98,14 @@ public class ListeningCountService {
         }
     }
 
-    public ResponseObject getTop20SongsByListenCount() {
+    public ResponseObject getTop10SongsByListenCount() {
         try {
             List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
             List<SongResponse> responses = topSongs.stream()
-                    .limit(20) // Giới hạn top 20
+                    .limit(10)
                     .map(result -> {
                         Integer songId = (Integer) result[0];
+                        Long listenCount = (Long) result[1];
                         Song song = songRepository.findById(songId)
                                 .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
                         return new SongResponse(
@@ -115,13 +117,33 @@ public class ListeningCountService {
                                 song.getFileUrl(),
                                 song.getImageUrl(),
                                 song.getGenre().getId(),
-                                song.getGenre().getName()
+                                song.getGenre().getName(),
+                                listenCount,
+                                null
                         );
                     })
                     .collect(Collectors.toList());
-            return new ResponseObject("success", "Lấy top 20 bài hát được nghe nhiều nhất thành công", responses);
+            return new ResponseObject("success", "Lấy top 10 bài hát được nghe nhiều nhất thành công", responses);
         } catch (Exception e) {
-            return new ResponseObject("error", "Lấy top 20 bài hát thất bại: " + e.getMessage(), null);
+            return new ResponseObject("error", "Lấy top 10 bài hát thất bại: " + e.getMessage(), null);
+        }
+    }
+
+    public ResponseObject getTop10ArtistsByListenCount() {
+        try {
+            List<Object[]> topArtists = listeningCountRepository.findTopArtistsByListenCount();
+            List<ArtistResponse> responses = topArtists.stream()
+                    .limit(10)
+                    .map(result -> {
+                        Integer artistId = (Integer) result[0];
+                        String artistName = (String) result[1];
+                        Long listenCount = (Long) result[2];
+                        return new ArtistResponse(artistId, artistName, listenCount);
+                    })
+                    .collect(Collectors.toList());
+            return new ResponseObject("success", "Lấy top 10 nghệ sĩ được nghe nhiều nhất thành công", responses);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Lấy top 10 nghệ sĩ thất bại: " + e.getMessage(), null);
         }
     }
 }

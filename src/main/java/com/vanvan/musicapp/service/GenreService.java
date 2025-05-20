@@ -18,11 +18,15 @@ public class GenreService {
     private final GenreRepository genreRepository;
 
     public ResponseObject getAllGenres() {
-        List<GenreResponse> genreDTOs = genreRepository.findAll()
-                .stream()
-                .map(genre -> new GenreResponse(genre.getId(), genre.getName()))
-                .collect(Collectors.toList());
-        return new ResponseObject("success", "Genres retrieved", genreDTOs);
+        try {
+            List<GenreResponse> genreDTOs = genreRepository.findAll()
+                    .stream()
+                    .map(genre -> new GenreResponse(genre.getId(), genre.getName(), null))
+                    .collect(Collectors.toList());
+            return new ResponseObject("success", "Lấy danh sách thể loại thành công", genreDTOs);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Lấy danh sách thể loại thất bại: " + e.getMessage(), null);
+        }
     }
 
     public ResponseObject createGenre(CreateGenreRequest request) {

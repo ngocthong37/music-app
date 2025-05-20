@@ -23,11 +23,10 @@ public class SongAdminController {
             @RequestParam("title") String title,
             @RequestParam("artistId") Integer artistId,
             @RequestParam("genreId") Integer genreId,
-            @RequestParam("duration") int duration,
             @RequestParam(value = "lyrics", required = false) String lyrics,
             @RequestParam("file") MultipartFile file
     ) {
-        return ResponseEntity.ok(songService.createSong(title, artistId, genreId, duration, lyrics, file));
+        return ResponseEntity.ok(songService.createSong(title, artistId, genreId, lyrics, file));
     }
 
 
@@ -37,11 +36,10 @@ public class SongAdminController {
             @RequestParam("title") String title,
             @RequestParam("artistId") Integer artistId,
             @RequestParam("genreId") Integer genreId,
-            @RequestParam("duration") int duration,
             @RequestParam(value = "lyrics", required = false) String lyrics,
             @RequestParam(value = "file", required = false) MultipartFile file
     ) {
-        ResponseObject response = songService.updateSong(id, title, artistId, genreId, duration, lyrics, file);
+        ResponseObject response = songService.updateSong(id, title, artistId, genreId, lyrics, file);
         return ResponseEntity.ok(response);
     }
 

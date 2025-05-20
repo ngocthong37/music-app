@@ -1,5 +1,6 @@
 package com.vanvan.musicapp.service;
 
+import com.mpatric.mp3agic.Mp3File;
 import com.vanvan.musicapp.entity.Artist;
 import com.vanvan.musicapp.entity.Genre;
 import com.vanvan.musicapp.entity.Song;
@@ -31,7 +32,7 @@ public class SongService {
     private final GenreRepository genreRepository;
     private final StorageService storageService;
 
-    public ResponseObject createSong(String title, Integer artistId, Integer genreId, int duration, String lyrics, MultipartFile file) {
+    public ResponseObject createSong(String title, Integer artistId, Integer genreId, String lyrics, MultipartFile file) {
         Artist artist = artistRepository.findById(artistId)
                 .orElseThrow(() -> new RuntimeException("Artist not found"));
         Genre genre = genreRepository.findById(genreId)
@@ -52,11 +53,15 @@ public class SongService {
             Path filePath = uploadDir.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
+            // 👇 Tự động lấy duration từ file MP3
+            Mp3File mp3File = new Mp3File(filePath.toFile());
+            int durationInSeconds = (int) mp3File.getLengthInSeconds();
+
             Song song = new Song();
             song.setTitle(title);
             song.setArtist(artist);
             song.setGenre(genre);
-            song.setDuration(duration);
+            song.setDuration(durationInSeconds);
             song.setFileUrl("/api/v1/musics/" + fileName);
             song.setLyrics(lyrics);
             song.setCreatedAt(new Date());
@@ -66,18 +71,16 @@ public class SongService {
             return new ResponseObject("success", "song created successfully", savedSong.getId());
 
         } catch (Exception e) {
-            return new ResponseObject("error", "Failed to create album: " + e.getMessage(), null);
+            return new ResponseObject("error", "Failed to create song: " + e.getMessage(), null);
         }
     }
 
 
 
-    public ResponseObject updateSong(Integer id, String title, Integer artistId, Integer genreId, int duration, String lyrics, MultipartFile file) {
-        // Tìm bài hát theo ID
+    public ResponseObject updateSong(Integer id, String title, Integer artistId, Integer genreId, String lyrics, MultipartFile file) {
         Song song = songRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài hát"));
 
-        // Tìm nghệ sĩ và thể loại
         Artist artist = artistRepository.findById(artistId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nghệ sĩ"));
         Genre genre = genreRepository.findById(genreId)
@@ -87,7 +90,6 @@ public class SongService {
             song.setTitle(title);
             song.setArtist(artist);
             song.setGenre(genre);
-            song.setDuration(duration);
             song.setLyrics(lyrics);
             song.setUpdatedAt(new Date());
 
@@ -105,20 +107,26 @@ public class SongService {
                     Files.createDirectories(uploadPath);
                 }
 
+                // Xóa file cũ nếu có
                 if (song.getFileUrl() != null && !song.getFileUrl().isBlank()) {
                     String oldFileName = song.getFileUrl().substring(song.getFileUrl().lastIndexOf("/") + 1);
                     Path oldFilePath = uploadPath.resolve(oldFileName);
                     Files.deleteIfExists(oldFilePath);
                 }
 
+                // Lưu file mới
                 Path filePath = uploadPath.resolve(fileName);
                 Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
+                // 👉 Tính duration từ file mp3
+                Mp3File mp3File = new Mp3File(filePath.toFile());
+                int durationInSeconds = (int) mp3File.getLengthInSeconds();
+
+                song.setDuration(durationInSeconds);
                 song.setFileUrl("/api/v1/musics/" + fileName);
             }
 
             Song updatedSong = songRepository.save(song);
-
             return new ResponseObject("success", "Cập nhật bài hát thành công", updatedSong.getId());
 
         } catch (Exception e) {

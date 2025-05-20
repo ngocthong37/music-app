@@ -28,9 +28,21 @@ public class ListeningCountController {
     }
 
 
-    @GetMapping("/top")
-    public ResponseEntity<ResponseObject> getTop20SongsByListenCount() {
-        ResponseObject response = listeningCountService.getTop20SongsByListenCount();
+//    @GetMapping("/top")
+//    public ResponseEntity<ResponseObject> getTop20SongsByListenCount() {
+//        ResponseObject response = listeningCountService.getTop20SongsByListenCount();
+//        return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
+//    }
+
+    @GetMapping("/top-songs")
+    public ResponseEntity<ResponseObject> getTop10SongsByListenCount() {
+        ResponseObject response = listeningCountService.getTop10SongsByListenCount();
+        return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
+    }
+
+    @GetMapping("/top-artists")
+    public ResponseEntity<ResponseObject> getTop10ArtistsByListenCount() {
+        ResponseObject response = listeningCountService.getTop10ArtistsByListenCount();
         return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
     }
 }

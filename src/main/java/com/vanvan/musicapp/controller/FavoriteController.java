@@ -19,8 +19,7 @@ public class FavoriteController {
     @PostMapping("/add")
     public ResponseEntity<ResponseObject> addFavorite(@RequestBody FavoriteRequest request) {
         try {
-            Favorite favorite = favoriteService.addFavorite(request.getUserId(), request.getSongId());
-            return ResponseEntity.ok(new ResponseObject("success", "Thêm vào danh sách yêu thích thành công", favorite.getId()));
+            return ResponseEntity.ok(favoriteService.addFavorite(request.getUserId(), request.getSongId()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ResponseObject("error", e.getMessage(), null));
         }
@@ -39,6 +38,18 @@ public class FavoriteController {
     @GetMapping("/get-by-user-id/{userId}")
     public ResponseEntity<ResponseObject> getByUserId(@PathVariable Integer userId) {
         return ResponseEntity.ok(favoriteService.getFavoritesByUserId(userId));
+    }
+
+    @GetMapping("/top-songs")
+    public ResponseEntity<ResponseObject> getTop10FavoriteSongs() {
+        ResponseObject response = favoriteService.getTop10FavoriteSongs();
+        return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
+    }
+
+    @GetMapping("/top-genres")
+    public ResponseEntity<ResponseObject> getTop10FavoriteGenres() {
+        ResponseObject response = favoriteService.getTop10FavoriteGenres();
+        return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
     }
 
 }

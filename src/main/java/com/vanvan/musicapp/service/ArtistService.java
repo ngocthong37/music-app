@@ -20,7 +20,7 @@ public class ArtistService {
     public ResponseObject getAllArtists() {
         List<ArtistResponse> artistDTOs = artistRepository.findAll()
                 .stream()
-                .map(artist -> new ArtistResponse(artist.getId(), artist.getName()))
+                .map(artist -> new ArtistResponse(artist.getId(), artist.getName(), null))
                 .collect(Collectors.toList());
         return new ResponseObject("success", "Artists retrieved", artistDTOs);
     }
