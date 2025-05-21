@@ -20,7 +20,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -138,6 +140,29 @@ public class SongService {
         songRepository.deleteById(id);
     }
 
+    public ResponseObject getAllSongsAdmin() {
+        try {
+            List<Song> songs = songRepository.findAll();
+            List<SongResponse> songResponses = songs.stream().map(song -> new SongResponse(
+                    song.getId(),
+                    song.getTitle(),
+                    song.getArtist() != null ? song.getArtist().getId() : null,
+                    song.getArtist() != null ? song.getArtist().getName() : null,
+                    song.getDuration(),
+                    song.getFileUrl(),
+                    song.getImageUrl(),
+                    song.getGenre().getId(),
+                    song.getGenre().getName()
+
+            )).collect(Collectors.toList());
+            Map<String, Object> data = new HashMap<>();
+            return new ResponseObject("success", "Songs fetched successfully", songResponses);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to fetch songs: " + e.getMessage(), null);
+        }
+    }
+
+
     public ResponseObject getAllSongs() {
         try {
             List<Song> songs = songRepository.findAll();
@@ -153,8 +178,9 @@ public class SongService {
                     song.getGenre().getName()
 
             )).collect(Collectors.toList());
-
-            return new ResponseObject("success", "Songs fetched successfully", songResponses);
+            Map<String, Object> data = new HashMap<>();
+            data.put("songs", songResponses);
+            return new ResponseObject("success", "Songs fetched successfully", data);
         } catch (Exception e) {
             return new ResponseObject("error", "Failed to fetch songs: " + e.getMessage(), null);
         }
