@@ -23,6 +23,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -161,26 +162,31 @@ public class AuthenticationService {
                 .body(new ResponseObject("OK", "Log out successfully", ""));
     }
 
-    public void forgotPassword(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseObject forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String resetToken = UUID.randomUUID().toString();
-        user.setResetToken(resetToken);
-        user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
-        userRepository.save(user);
+            String resetToken = UUID.randomUUID().toString();
+            user.setResetToken(resetToken);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
+            userRepository.save(user);
 
-        userRepository.save(user);
+            Map<String, Object> model = new HashMap<>();
+            model.put("userName", user.getUsername());
+            model.put("resetLink", "http://localhost:3000/auth/reset-password?token=" + resetToken);
 
-        Map<String, Object> model = new HashMap<>();
-        model.put("userName", user.getUsername());
-        model.put("resetLink", "http://localhost:3000/auth/reset-password?token=" + resetToken);
+            emailSendService.sendMail(
+                    request.getEmail(),
+                    new String[]{},
+                    "Password Reset Request",
+                    model
+            );
 
-        emailSendService.sendMail(
-                request.getEmail(),
-                new String[]{},
-                "Password Reset Request",
-                model
-        );
+            return new ResponseObject("success", "Đã gửi email đặt lại mật khẩu", user.getId());
+        } catch (Exception e) {
+            return new ResponseObject("error", "Gửi yêu cầu đặt lại mật khẩu thất bại: " + e.getMessage(), null);
+        }
     }
+
 }

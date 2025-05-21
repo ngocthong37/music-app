@@ -7,6 +7,7 @@ import com.vanvan.musicapp.request.ForgotPasswordRequest;
 import com.vanvan.musicapp.request.RegisterRequest;
 import com.vanvan.musicapp.request.ResetPasswordRequest;
 import com.vanvan.musicapp.response.AuthenticationResponse;
+import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.security.JwtService;
 import com.vanvan.musicapp.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +40,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("auth/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
-        authenticationService.forgotPassword(request);
-        return ResponseEntity.ok("Password reset email sent successfully");
+    public ResponseEntity<ResponseObject> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        ResponseObject response = authenticationService.forgotPassword(request);
+        return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
     }
 
     @PostMapping("auth/reset-password")
