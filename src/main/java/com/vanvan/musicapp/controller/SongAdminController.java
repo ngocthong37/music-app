@@ -51,7 +51,7 @@ public class SongAdminController {
 
     @GetMapping("/get-all")
     public ResponseEntity<ResponseObject>  getAllSongs() {
-        ResponseObject response = songService.getAllSongs();
+        ResponseObject response = songService.getAllSongsAdmin();
         return ResponseEntity.ok(response);
     }
 

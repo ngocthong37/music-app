@@ -1,22 +1,22 @@
 package com.vanvan.musicapp.controller;
 
+import com.vanvan.musicapp.entity.Song;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.service.RecommendationService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/recommendations")
-@RequiredArgsConstructor
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class RecommendationController {
 
-    private final RecommendationService recommendationService;
+    @Autowired
+    private RecommendationService recommendationService;
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ResponseObject> getRecommendedSongs(@PathVariable Integer userId) {
-        ResponseObject response = recommendationService.getRecommendedSongs(userId);
-        return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
+    public ResponseObject getRecommendations(@PathVariable Integer userId, @RequestParam(defaultValue = "10") int limit) {
+        return recommendationService.getRecommendations(userId, limit);
     }
 }

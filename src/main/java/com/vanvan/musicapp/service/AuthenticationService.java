@@ -8,6 +8,7 @@ import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.TokenRepository;
 import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.request.AuthenticationRequest;
+import com.vanvan.musicapp.request.ForgotPasswordRequest;
 import com.vanvan.musicapp.request.RegisterRequest;
 import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.response.ResponseObject;
@@ -24,6 +25,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 ;
 
@@ -35,6 +40,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailSendService emailSendService;
 
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
@@ -153,5 +159,28 @@ public class AuthenticationService {
         revokeAllUserTokensLogOut(accountId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ResponseObject("OK", "Log out successfully", ""));
+    }
+
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String resetToken = UUID.randomUUID().toString();
+        user.setResetToken(resetToken);
+        user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
+        userRepository.save(user);
+
+        userRepository.save(user);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("userName", user.getUsername());
+        model.put("resetLink", "http://localhost:3000/auth/reset-password?token=" + resetToken);
+
+        emailSendService.sendMail(
+                request.getEmail(),
+                new String[]{},
+                "Password Reset Request",
+                model
+        );
     }
 }

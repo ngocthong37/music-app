@@ -6,101 +6,232 @@ import com.vanvan.musicapp.entity.Song;
 import com.vanvan.musicapp.repository.FavoriteRepository;
 import com.vanvan.musicapp.repository.ListeningCountRepository;
 import com.vanvan.musicapp.repository.SongRepository;
-import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.response.SongResponse;
-import lombok.RequiredArgsConstructor;
+import com.vanvan.musicapp.utils.UtilsService;
+import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class RecommendationService {
-    private final FavoriteRepository favoriteRepository;
-    private final ListeningCountRepository listeningCountRepository;
+
     private final SongRepository songRepository;
-    private final UserRepository userRepository;
 
-    public ResponseObject getRecommendedSongs(Integer userId) {
+    private final FavoriteRepository favoriteRepository;
+
+    private final ListeningCountRepository listeningCountRepository;
+
+    private final SongVectorService songVectorService;
+
+    private final UtilsService utilsService;
+
+    // Khởi tạo vector TF-IDF khi ứng dụng chạy
+    @PostConstruct
+    public void init() throws IOException {
+        List<Song> songs = songRepository.findAll();
+        songVectorService.buildVectors(songs);
+    }
+
+    // Gợi ý bài hát dựa trên Content-based Filtering
+    public ResponseObject getContentBasedRecommendations(Integer userId, int limit) {
         try {
-            userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
-
-            // Lấy bài hát yêu thích và đã nghe
             List<Favorite> favorites = favoriteRepository.findByUserId(userId);
             List<ListeningCount> listeningCounts = listeningCountRepository.findByUserId(userId);
 
-            // Tập hợp songId đã nghe hoặc yêu thích để loại bỏ
-            Set<Integer> excludeSongIds = new HashSet<>();
-            favorites.forEach(f -> excludeSongIds.add(f.getSong().getId()));
-            listeningCounts.forEach(lc -> excludeSongIds.add(lc.getSongId()));
+            Set<Integer> interactedSongIds = new HashSet<>();
+            favorites.forEach(fav -> interactedSongIds.add(fav.getSong().getId()));
+            listeningCounts.forEach(count -> interactedSongIds.add(count.getSongId()));
 
-            // Tập hợp genreId và artistId từ bài hát yêu thích và đã nghe
-            Set<Integer> genreIds = new HashSet<>();
-            Set<Integer> artistIds = new HashSet<>();
-            for (Favorite favorite : favorites) {
-                Song song = favorite.getSong();
-                genreIds.add(song.getGenre().getId());
-                artistIds.add(song.getArtist().getId());
-            }
-            for (ListeningCount lc : listeningCounts) {
-                Song song = songRepository.findById(lc.getSongId())
-                        .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
-                genreIds.add(song.getGenre().getId());
-                artistIds.add(song.getArtist().getId());
+            if (interactedSongIds.isEmpty()) {
+                List<Object> randomSongs = songRepository.findAll().stream()
+                        .limit(limit)
+                        .map(utilsService::convertToSongResponse)
+                        .collect(Collectors.toList());
+                return new ResponseObject("success", "User has no interactions, returning random songs", randomSongs);
             }
 
-            // Tìm bài hát theo thể loại và ca sĩ
-            List<Song> recommendedSongs = new ArrayList<>();
-            for (Integer genreId : genreIds) {
-                recommendedSongs.addAll(songRepository.findByGenreId(genreId));
-            }
-            for (Integer artistId : artistIds) {
-                recommendedSongs.addAll(songRepository.findByArtistId(artistId));
-            }
+            Map<Integer, Map<String, Double>> songVectors = songVectorService.getSongVectors();
+            Map<Integer, Double> similarityScores = new HashMap<>();
 
-            // Loại bỏ bài hát đã nghe/yêu thích
-            recommendedSongs = recommendedSongs.stream()
-                    .filter(song -> !excludeSongIds.contains(song.getId()))
-                    .distinct()
-                    .limit(20) // Giới hạn 20 bài
-                    .collect(Collectors.toList());
+            List<Song> allSongs = songRepository.findAll();
+            for (Song song : allSongs) {
+                if (interactedSongIds.contains(song.getId())) continue;
 
-            // Nếu thiếu bài, bổ sung bài phổ biến
-            if (recommendedSongs.size() < 20) {
-                List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
-                for (Object[] result : topSongs) {
-                    Integer songId = (Integer) result[0];
-                    if (!excludeSongIds.contains(songId)) {
-                        songRepository.findById(songId).ifPresent(recommendedSongs::add);
+                double totalSimilarity = 0.0;
+                int validComparisons = 0;
+
+                for (Integer interactedSongId : interactedSongIds) {
+                    Map<String, Double> v1 = songVectors.get(interactedSongId);
+                    Map<String, Double> v2 = songVectors.get(song.getId());
+                    if (v1 != null && v2 != null) {
+                        totalSimilarity += songVectorService.calculateCosineSimilarity(v1, v2);
+                        validComparisons++;
                     }
-                    if (recommendedSongs.size() >= 20) break;
+                }
+
+                if (validComparisons > 0) {
+                    similarityScores.put(song.getId(), totalSimilarity / validComparisons);
                 }
             }
 
-            // Ánh xạ sang SongResponse
-            List<SongResponse> responses = recommendedSongs.stream()
-                    .map(song -> new SongResponse(
-                            song.getId(),
-                            song.getTitle(),
-                            song.getArtist() != null ? song.getArtist().getId() : null,
-                            song.getArtist() != null ? song.getArtist().getName() : null,
-                            song.getDuration(),
-                            song.getFileUrl(),
-                            song.getImageUrl(),
-                            song.getGenre().getId(),
-                            song.getGenre().getName()
-                    ))
+            List<Object> recommendedSongs = similarityScores.entrySet().stream()
+                    .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                    .limit(limit)
+                    .map(entry -> songRepository.findById(entry.getKey()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(utilsService::convertToSongResponse)
                     .collect(Collectors.toList());
 
-            return new ResponseObject("success", "Lấy danh sách bài hát gợi ý thành công", responses);
+            return new ResponseObject("success", "Content-based recommendations fetched successfully", recommendedSongs);
+
         } catch (Exception e) {
-            return new ResponseObject("error", "Lấy danh sách gợi ý thất bại: " + e.getMessage(), null);
+            return new ResponseObject("error", "Failed to get content-based recommendations: " + e.getMessage(), null);
         }
     }
+
+
+    public ResponseObject getCollaborativeRecommendations(Integer userId, int limit) {
+        try {
+            List<ListeningCount> allListeningCounts = listeningCountRepository.findAll();
+            List<Favorite> allFavorites = favoriteRepository.findAll();
+
+            Map<Integer, Map<String, Double>> songVectors = songVectorService.getSongVectors();
+
+            // Lấy danh sách bài hát user đã tương tác
+            Set<Integer> targetUserSongIds = new HashSet<>();
+            allListeningCounts.stream()
+                    .filter(lc -> lc.getUserId().equals(userId))
+                    .forEach(lc -> targetUserSongIds.add(lc.getSongId()));
+            allFavorites.stream()
+                    .filter(fav -> fav.getUser().getId().equals(userId))
+                    .forEach(fav -> targetUserSongIds.add(fav.getSong().getId()));
+
+            // Tạo vector người dùng mục tiêu
+            Map<String, Double> targetUserVector = new HashMap<>();
+            for (Integer songId : targetUserSongIds) {
+                Map<String, Double> songVec = songVectors.get(songId);
+                if (songVec != null) {
+                    for (Map.Entry<String, Double> e : songVec.entrySet()) {
+                        targetUserVector.merge(e.getKey(), e.getValue(), Double::sum);
+                    }
+                }
+            }
+
+            // Lấy các người dùng khác
+            Set<Integer> otherUsers = new HashSet<>();
+            allListeningCounts.forEach(lc -> otherUsers.add(lc.getUserId()));
+            allFavorites.forEach(fav -> otherUsers.add(fav.getUser().getId()));
+            otherUsers.remove(userId);
+
+            // Tính độ tương đồng
+            Map<Integer, Double> userSimilarity = new HashMap<>();
+            for (Integer otherUserId : otherUsers) {
+                Set<Integer> otherUserSongIds = new HashSet<>();
+                allListeningCounts.stream()
+                        .filter(lc -> lc.getUserId().equals(otherUserId))
+                        .forEach(lc -> otherUserSongIds.add(lc.getSongId()));
+                allFavorites.stream()
+                        .filter(fav -> fav.getUser().getId().equals(otherUserId))
+                        .forEach(fav -> otherUserSongIds.add(fav.getSong().getId()));
+
+                Map<String, Double> otherUserVector = new HashMap<>();
+                for (Integer songId : otherUserSongIds) {
+                    Map<String, Double> songVec = songVectors.get(songId);
+                    if (songVec != null) {
+                        for (Map.Entry<String, Double> e : songVec.entrySet()) {
+                            otherUserVector.merge(e.getKey(), e.getValue(), Double::sum);
+                        }
+                    }
+                }
+
+                double similarity = songVectorService.calculateCosineSimilarity(targetUserVector, otherUserVector);
+                userSimilarity.put(otherUserId, similarity);
+            }
+
+            // Lấy top 5 user tương tự
+            List<Integer> similarUsers = userSimilarity.entrySet().stream()
+                    .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                    .limit(5)
+                    .map(Map.Entry::getKey)
+                    .toList();
+
+            // Lấy bài hát gợi ý từ các user tương tự
+            Set<Integer> interactedSongs = new HashSet<>(targetUserSongIds);
+            Set<Integer> recommendedSongIds = new HashSet<>();
+
+            for (Integer similarUserId : similarUsers) {
+                allListeningCounts.stream()
+                        .filter(lc -> lc.getUserId().equals(similarUserId))
+                        .map(ListeningCount::getSongId)
+                        .filter(songId -> !interactedSongs.contains(songId))
+                        .forEach(recommendedSongIds::add);
+
+                allFavorites.stream()
+                        .filter(fav -> fav.getUser().getId().equals(similarUserId))
+                        .map(fav -> fav.getSong().getId())
+                        .filter(songId -> !interactedSongs.contains(songId))
+                        .forEach(recommendedSongIds::add);
+            }
+
+            // Trả về danh sách gợi ý dưới dạng SongResponse
+            List<SongResponse> recommendedSongs = recommendedSongIds.stream()
+                    .map(songId -> songRepository.findById(songId).orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(utilsService::convertToSongResponse)
+                    .limit(limit)
+                    .toList();
+
+            return new ResponseObject("success", "Recommendations generated successfully", recommendedSongs);
+
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to generate recommendations: " + e.getMessage(), null);
+        }
+    }
+
+
+    // Kết hợp cả hai phương pháp
+    public ResponseObject getRecommendations(Integer userId, int limit) {
+        try {
+            ResponseObject contentResponse = getContentBasedRecommendations(userId, limit / 2);
+            ResponseObject collaborativeResponse = getCollaborativeRecommendations(userId, limit / 2);
+
+            List<Object> contentBased = contentResponse.getData() instanceof List ? (List<Object>) contentResponse.getData() : new ArrayList<>();
+            List<Object> collaborative = collaborativeResponse.getData() instanceof List ? (List<Object>) collaborativeResponse.getData() : new ArrayList<>();
+
+            // Kết hợp và loại bỏ trùng lặp theo ID
+            Map<Integer, Object> uniqueMap = new LinkedHashMap<>();
+            for (Object song : contentBased) {
+                if (song instanceof SongResponse songResp) {
+                    uniqueMap.put(songResp.getId(), songResp);
+                }
+            }
+            for (Object song : collaborative) {
+                if (song instanceof SongResponse songResp) {
+                    uniqueMap.putIfAbsent(songResp.getId(), songResp);
+                }
+            }
+
+            List<Object> finalList = new ArrayList<>(uniqueMap.values()).stream()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+
+            // Bọc trong map với key "songs"
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("songs", finalList);
+
+            return new ResponseObject("success", "Combined recommendations fetched successfully", responseData);
+
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to get combined recommendations: " + e.getMessage(), null);
+        }
+    }
+
+
 }
