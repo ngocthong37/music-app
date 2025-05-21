@@ -27,12 +27,6 @@ public class SongController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/upload-image-song")
-    public String uploadImageSong(@RequestParam("namePath") String namePath, @RequestParam("file") MultipartFile file,
-                                  @RequestParam("songId") Integer songId) {
-        return songService.uploadImage(file, namePath, songId);
-    }
-
     @GetMapping("/search")
     public ResponseEntity<ResponseObject> searchSongs(@RequestParam String keyword) {
         return ResponseEntity.ok(songService.searchSongs(keyword));
