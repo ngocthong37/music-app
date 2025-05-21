@@ -60,7 +60,7 @@ public class ListeningCountService {
             response.setCount(savedCount.getCount());
             response.setListenTime(savedCount.getListenTime());
 
-            return new ResponseObject("success", "Tăng lượt nghe thành công", response);
+            return new ResponseObject("success", "Tăng lượt nghe thành công", response.getId());
         } catch (Exception e) {
             return new ResponseObject("error", "Tăng lượt nghe thất bại: " + e.getMessage(), null);
         }
@@ -103,12 +103,15 @@ public class ListeningCountService {
     public ResponseObject getTop10SongsByListenCount() {
         try {
             List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
+
             List<SongResponse> responses = topSongs.stream()
-                    .limit(10)
                     .map(result -> {
                         Integer songId = (Integer) result[0];
+                        Long listenCount = (Long) result[1];
+
                         Song song = songRepository.findById(songId)
                                 .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
+
                         return new SongResponse(
                                 song.getId(),
                                 song.getTitle(),
@@ -118,9 +121,13 @@ public class ListeningCountService {
                                 song.getFileUrl(),
                                 song.getImageUrl(),
                                 song.getGenre().getId(),
-                                song.getGenre().getName()
+                                song.getGenre().getName(),
+                                listenCount,
+                                null
                         );
                     })
+                    .sorted((a, b) -> Long.compare(b.getListenCount(), a.getListenCount())) // sắp xếp giảm dần
+                    .limit(10)
                     .collect(Collectors.toList());
 
             Map<String, Object> data = new HashMap<>();
@@ -131,6 +138,7 @@ public class ListeningCountService {
             return new ResponseObject("error", "Lấy top 10 bài hát thất bại: " + e.getMessage(), null);
         }
     }
+
 
     public ResponseObject getTop10ArtistsByListenCount() {
         try {
