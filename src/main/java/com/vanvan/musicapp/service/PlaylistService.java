@@ -113,6 +113,21 @@ public class PlaylistService {
         }
     }
 
+    @Transactional
+    public ResponseObject deletePlaylist(Integer id) {
+        try {
+            Playlist playlist = playlistRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+
+            playlistSongRepository.deleteByPlaylistId(id);
+            playlistRepository.delete(playlist);
+
+            return new ResponseObject("success", "Playlist deleted successfully", id);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to delete playlist: " + e.getMessage(), null);
+        }
+    }
+
     private PlaylistResponse mapToResponse(Playlist playlist) {
         PlaylistResponse response = new PlaylistResponse();
         response.setId(playlist.getId());

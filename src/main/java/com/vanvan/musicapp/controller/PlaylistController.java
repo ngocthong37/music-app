@@ -42,4 +42,10 @@ public class PlaylistController {
         ResponseObject response = playlistService.updatePlaylist(id, request);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ResponseObject> deletePlaylist(@PathVariable Integer id) {
+        ResponseObject response = playlistService.deletePlaylist(id);
+        return ResponseEntity.ok(response);
+    }
 }
