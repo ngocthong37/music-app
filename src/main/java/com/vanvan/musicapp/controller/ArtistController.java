@@ -1,11 +1,13 @@
 package com.vanvan.musicapp.controller;
 
+import com.vanvan.musicapp.repository.ArtistRepository;
 import com.vanvan.musicapp.request.CreateArtistRequest;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.service.ArtistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/admin/artists")
@@ -14,10 +16,17 @@ import org.springframework.web.bind.annotation.*;
 public class ArtistController {
 
     private final ArtistService artistService;
+    private final ArtistRepository artistRepository;
 
     @GetMapping("/get-all")
     public ResponseEntity<ResponseObject> getAllArtists() {
         return ResponseEntity.ok(artistService.getAllArtists());
+    }
+
+    @PostMapping("/upload-artist-avatar")
+    public String uploadImageSong(@RequestParam("namePath") String namePath, @RequestParam("file") MultipartFile file,
+                                  @RequestParam("artistId") Integer artistId) {
+        return artistService.uploadImage(file, namePath, artistId);
     }
 
     @PostMapping

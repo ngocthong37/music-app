@@ -31,4 +31,10 @@ public class SongController {
         return ResponseEntity.ok(songService.searchSongs(keyword));
     }
 
+    @GetMapping("/by-artist/{artistId}")
+    public ResponseEntity<ResponseObject> getSongsByArtist(@PathVariable Integer artistId) {
+        ResponseObject response = songService.getSongsByArtistId(artistId);
+        return ResponseEntity.ok(response);
+    }
+
 }

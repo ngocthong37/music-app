@@ -21,6 +21,8 @@ public class Artist {
     @Lob
     private String bio;
 
+    private String imageUrl;
+
     @OneToMany(mappedBy = "artist")
     private List<Song> songs;
 

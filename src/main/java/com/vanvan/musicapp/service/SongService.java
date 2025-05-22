@@ -214,5 +214,35 @@ public class SongService {
         }
     }
 
+    public ResponseObject getSongsByArtistId(Integer artistId) {
+        try {
+            Artist artist = artistRepository.findById(artistId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nghệ sĩ với ID: " + artistId));
+
+            List<Song> songs = songRepository.findByArtistId(artistId);
+            if (songs.isEmpty()) {
+                return new ResponseObject("success", "Không có bài hát nào cho nghệ sĩ này", new HashMap<>());
+            }
+
+            List<SongResponse> songResponses = songs.stream().map(song -> new SongResponse(
+                    song.getId(),
+                    song.getTitle(),
+                    song.getArtist() != null ? song.getArtist().getId() : null,
+                    song.getArtist() != null ? song.getArtist().getName() : null,
+                    song.getDuration(),
+                    song.getFileUrl(),
+                    song.getImageUrl(),
+                    song.getGenre().getId(),
+                    song.getGenre().getName()
+            )).collect(Collectors.toList());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("songs", songResponses);
+            return new ResponseObject("success", "Songs fetched successfully", data);
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to fetch songs: " + e.getMessage(), null);
+        }
+    }
+
 
 }

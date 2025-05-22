@@ -131,9 +131,8 @@ public class ListeningCountService {
                     .collect(Collectors.toList());
 
             Map<String, Object> data = new HashMap<>();
-            data.put("songs", responses);
 
-            return new ResponseObject("success", "Lấy top 10 bài hát được nghe nhiều nhất thành công", data);
+            return new ResponseObject("success", "Lấy top 10 bài hát được nghe nhiều nhất thành công", responses);
         } catch (Exception e) {
             return new ResponseObject("error", "Lấy top 10 bài hát thất bại: " + e.getMessage(), null);
         }
@@ -146,10 +145,10 @@ public class ListeningCountService {
             List<ArtistResponse> responses = topArtists.stream()
                     .limit(10)
                     .map(result -> {
-                        Integer artistId = (Integer) result[0];
-                        String artistName = (String) result[1];
-                        Long listenCount = (Long) result[2];
-                        return new ArtistResponse(artistId, artistName, listenCount);
+                        Integer artistId = ((Number) result[0]).intValue();
+                        String artistName = result[1] != null ? result[1].toString() : null;
+                        Long listenCount = ((Number) result[2]).longValue();
+                        return new ArtistResponse(artistId, artistName, null, listenCount);
                     })
                     .collect(Collectors.toList());
             return new ResponseObject("success", "Lấy top 10 nghệ sĩ được nghe nhiều nhất thành công", responses);
