@@ -2,10 +2,7 @@ package com.vanvan.musicapp.controller;
 
 import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.UserRepository;
-import com.vanvan.musicapp.request.AuthenticationRequest;
-import com.vanvan.musicapp.request.ForgotPasswordRequest;
-import com.vanvan.musicapp.request.RegisterRequest;
-import com.vanvan.musicapp.request.ResetPasswordRequest;
+import com.vanvan.musicapp.request.*;
 import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.security.JwtService;
@@ -60,6 +57,11 @@ public class AuthenticationController {
         userRepository.save(user);
 
         return ResponseEntity.ok("Password reset successfully");
+    }
+
+    @PostMapping("auth/log-out")
+    public ResponseEntity<ResponseObject> logOut(@RequestBody LogOutRequest request) {
+        return ResponseEntity.ok(authenticationService.logout(request));
     }
 
 }

@@ -9,6 +9,7 @@ import com.vanvan.musicapp.repository.TokenRepository;
 import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.request.AuthenticationRequest;
 import com.vanvan.musicapp.request.ForgotPasswordRequest;
+import com.vanvan.musicapp.request.LogOutRequest;
 import com.vanvan.musicapp.request.RegisterRequest;
 import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.response.ResponseObject;
@@ -156,10 +157,9 @@ public class AuthenticationService {
         }
     }
 
-    public ResponseEntity<ResponseObject> logout(Integer accountId) {
-        revokeAllUserTokensLogOut(accountId);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(new ResponseObject("OK", "Log out successfully", ""));
+    public ResponseObject logout(LogOutRequest request) {
+        revokeAllUserTokensLogOut(request.getUserId());
+        return new ResponseObject("OK", "Log out successfully", true);
     }
 
     public ResponseObject forgotPassword(@RequestBody ForgotPasswordRequest request) {
