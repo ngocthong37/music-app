@@ -1,6 +1,7 @@
 package com.vanvan.musicapp.controller;
 
 import com.vanvan.musicapp.request.PlaylistCreateRequest;
+import com.vanvan.musicapp.request.UpdateTitleRequest;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.service.PlaylistService;
 import jakarta.validation.Valid;
@@ -48,4 +49,13 @@ public class PlaylistController {
         ResponseObject response = playlistService.deletePlaylist(id);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/update-title/{id}")
+    public ResponseEntity<ResponseObject> updatePlaylistTitle(
+            @PathVariable Integer id,
+            @RequestBody UpdateTitleRequest request) {
+        ResponseObject response = playlistService.updatePlaylistTitle(id, request.getTitle());
+        return ResponseEntity.ok(response);
+    }
+
 }

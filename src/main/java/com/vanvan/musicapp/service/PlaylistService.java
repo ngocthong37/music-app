@@ -155,4 +155,20 @@ public class PlaylistService {
 
         return response;
     }
+
+    @Transactional
+    public ResponseObject updatePlaylistTitle(Integer id, String newTitle) {
+        try {
+            Playlist playlist = playlistRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Playlist not found"));
+
+            playlist.setTitle(newTitle);
+            Playlist updatedPlayList = playlistRepository.save(playlist);
+
+            return new ResponseObject("success", "Playlist title updated successfully", updatedPlayList.getId());
+        } catch (Exception e) {
+            return new ResponseObject("error", "Failed to update playlist title: " + e.getMessage(), null);
+        }
+    }
+
 }
