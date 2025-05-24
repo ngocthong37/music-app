@@ -43,6 +43,9 @@ public class EmailServiceRepositoryImp implements IEmailServiceRepository {
             if (subject.equals("Password Reset Request")) {
                 t = config.getTemplate("forgot_password.ftl");
             }
+            else if (subject.equals("Verify Account Request")) {
+                t = config.getTemplate("verify-account.ftl");
+            }
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(t, model);
 
             mimeMessageHelper.setText(html, true);

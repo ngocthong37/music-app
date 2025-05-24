@@ -64,4 +64,9 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.logout(request));
     }
 
+    @GetMapping("auth/verify")
+    public ResponseEntity<ResponseObject> verifyAccount(@RequestParam("token") String token) {
+        return ResponseEntity.ok(authenticationService.verifyAccount(token));
+    }
+
 }

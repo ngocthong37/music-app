@@ -45,6 +45,12 @@ public class User implements UserDetails {
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
 
+    @Column(name = "verification_token", length = 255)
+    private String verificationToken; // Thêm trường này
+
+    @Column(name = "is_verified")
+    private boolean isVerified; // Thêm trường này
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

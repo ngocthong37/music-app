@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -50,12 +51,18 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.valueOf(String.valueOf(request.getRole())))
                 .username(request.getName())
+                .isVerified(false)
+                .verificationToken(UUID.randomUUID().toString())
+                .createdAt(new Date())
+                .status("NOT_ACTIVE")
                 .build();
         User savedUser = userRepository.save(user);
         var jwtToken = jwtService.generateToken(savedUser);
         var refreshToken = jwtService.generateRefreshToken(savedUser);
 
         saveUserToken(savedUser, jwtToken);
+
+        sendVerificationEmail(savedUser);
         return AuthenticationResponse.builder()
                 .role(savedUser.getRole().toString())
                 .userId(user.getId())
@@ -187,6 +194,35 @@ public class AuthenticationService {
         } catch (Exception e) {
             return new ResponseObject("error", "Gửi yêu cầu đặt lại mật khẩu thất bại: " + e.getMessage(), null);
         }
+    }
+
+    private void sendVerificationEmail(User user) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("userName", user.getUsername());
+        model.put("verificationLink", "http://localhost:3000/auth/verify?token=" + user.getVerificationToken());
+
+        emailSendService.sendMail(
+                user.getEmail(),
+                new String[]{},
+                "Verify Account Request",
+                model
+        );
+    }
+
+    public ResponseObject verifyAccount(String token) {
+        User user = userRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new RuntimeException("Token xác thực không hợp lệ"));
+
+        if (user.isVerified()) {
+            return new ResponseObject("error", "Tài khoản đã được xác thực", null);
+        }
+
+        user.setVerified(true);
+        user.setVerificationToken(null);
+        user.setStatus("ACTIVE");
+        userRepository.save(user);
+
+        return new ResponseObject("success", "Xác thực tài khoản thành công", user.getId());
     }
 
 }
