@@ -184,6 +184,7 @@ public class AlbumService {
         }
     }
 
+    @Transactional
     public ResponseObject deleteAlbum(Integer id) {
         try {
             Optional<Album> optionalAlbum = albumRepository.findById(id);
