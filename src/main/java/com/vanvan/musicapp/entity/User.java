@@ -48,8 +48,8 @@ public class User implements UserDetails {
     @Column(name = "verification_token", length = 255)
     private String verificationToken; // Thêm trường này
 
-    @Column(name = "is_verified")
-    private boolean isVerified; // Thêm trường này
+    @Column(name = "is_verified", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isVerified;
 
 
     @Override

@@ -1,6 +1,7 @@
 package com.vanvan.musicapp.controller;
 
 import com.vanvan.musicapp.entity.User;
+import com.vanvan.musicapp.request.UpdateUserStatusRequest;
 import com.vanvan.musicapp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,8 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/status")
-    public ResponseEntity<User> updateUserStatus(@PathVariable Integer userId, @RequestBody String status) {
-        User updatedUser = userService.updateUserStatus(userId, status);
+    public ResponseEntity<User> updateUserStatus(@PathVariable Integer userId, @RequestBody UpdateUserStatusRequest request) {
+        User updatedUser = userService.updateUserStatus(userId, request);
         return ResponseEntity.ok(updatedUser);
     }
 }

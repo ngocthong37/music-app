@@ -14,12 +14,12 @@ import com.vanvan.musicapp.request.RegisterRequest;
 import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.security.JwtService;
+import com.vanvan.musicapp.utils.exception_handler.EmailAlreadyExistsException;
+import com.vanvan.musicapp.utils.exception_handler.InactiveAccountException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +46,10 @@ public class AuthenticationService {
     private final EmailSendService emailSendService;
 
     public AuthenticationResponse register(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Email đã được đăng ký");
+        }
+
         var user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -56,16 +60,17 @@ public class AuthenticationService {
                 .createdAt(new Date())
                 .status("NOT_ACTIVE")
                 .build();
+
         User savedUser = userRepository.save(user);
         var jwtToken = jwtService.generateToken(savedUser);
         var refreshToken = jwtService.generateRefreshToken(savedUser);
 
         saveUserToken(savedUser, jwtToken);
-
         sendVerificationEmail(savedUser);
+
         return AuthenticationResponse.builder()
                 .role(savedUser.getRole().toString())
-                .userId(user.getId())
+                .userId(savedUser.getId())
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
@@ -80,15 +85,10 @@ public class AuthenticationService {
                 )
         );
         var account = userRepository.findByEmail(request.getEmail())
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + request.getEmail()));
         String status = account.getStatus();
-        if (status != null && status.equals("locked")) {
-            return AuthenticationResponse.builder()
-                    .accessToken(null)
-                    .refreshToken(null)
-                    .role(null)
-                    .userId(null)
-                    .build();
+        if (status != null && status.equals("NOT_ACTIVE")) {
+            throw new InactiveAccountException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
         }
         var jwtToken = jwtService.generateToken(account);
         var refreshToken = jwtService.generateRefreshToken(account);
@@ -213,11 +213,11 @@ public class AuthenticationService {
         User user = userRepository.findByVerificationToken(token)
                 .orElseThrow(() -> new RuntimeException("Token xác thực không hợp lệ"));
 
-        if (user.isVerified()) {
+        if (user.getIsVerified()) {
             return new ResponseObject("error", "Tài khoản đã được xác thực", null);
         }
 
-        user.setVerified(true);
+        user.setIsVerified(true);
         user.setVerificationToken(null);
         user.setStatus("ACTIVE");
         userRepository.save(user);

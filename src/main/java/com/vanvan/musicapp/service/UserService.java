@@ -2,6 +2,7 @@ package com.vanvan.musicapp.service;
 
 import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.UserRepository;
+import com.vanvan.musicapp.request.UpdateUserStatusRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,10 +25,10 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-    public User updateUserStatus(Integer userId, String status) {
+    public User updateUserStatus(Integer userId, UpdateUserStatusRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setStatus(status);
+        user.setStatus(request.getStatus());
         return userRepository.save(user);
     }
 }

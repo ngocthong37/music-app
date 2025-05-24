@@ -3,11 +3,13 @@ package com.vanvan.musicapp.controller;
 import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.request.*;
-import com.vanvan.musicapp.response.AuthenticationResponse;
+import com.vanvan.musicapp.response.CustomErrorResponse;
 import com.vanvan.musicapp.response.ResponseObject;
-import com.vanvan.musicapp.security.JwtService;
 import com.vanvan.musicapp.service.AuthenticationService;
+import com.vanvan.musicapp.utils.exception_handler.EmailAlreadyExistsException;
+import com.vanvan.musicapp.utils.exception_handler.InactiveAccountException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -25,15 +27,30 @@ public class AuthenticationController {
     private final UserRepository userRepository;
 
     @PostMapping("auth/register")
-    public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody RegisterRequest request
-    ) {
-        return ResponseEntity.ok(authenticationService.register(request));
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        try {
+            return ResponseEntity.ok(authenticationService.register(request));
+        } catch (EmailAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new CustomErrorResponse("error", e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new CustomErrorResponse("error", "Đăng ký thất bại", null));
+        }
     }
 
+
     @PostMapping("auth/sign-in")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
-        return ResponseEntity.ok(authenticationService.authenticate(request));
+    public ResponseEntity<?> authenticate(@RequestBody AuthenticationRequest request) {
+        try {
+            return ResponseEntity.ok(authenticationService.authenticate(request));
+        } catch (InactiveAccountException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new CustomErrorResponse("error", e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new CustomErrorResponse("error", "Thông tin đăng nhập không hợp lệ", null));
+        }
     }
 
     @PostMapping("auth/forgot-password")
