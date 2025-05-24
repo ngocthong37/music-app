@@ -18,10 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,6 +80,8 @@ public class AlbumService {
                     album.getCreatedAt(),
                     album.getGenre() != null ? album.getGenre().getName() : null
             )).collect(Collectors.toList());
+
+            Collections.reverse(albumResponses);
 
             return new ResponseObject("success", "Albums fetched successfully", albumResponses);
         } catch (Exception e) {

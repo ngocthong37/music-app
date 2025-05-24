@@ -19,10 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -155,6 +152,7 @@ public class SongService {
                     song.getGenre().getName()
 
             )).collect(Collectors.toList());
+            Collections.reverse(songResponses);
             Map<String, Object> data = new HashMap<>();
             return new ResponseObject("success", "Songs fetched successfully", songResponses);
         } catch (Exception e) {
@@ -166,6 +164,7 @@ public class SongService {
     public ResponseObject getAllSongs() {
         try {
             List<Song> songs = songRepository.findAll();
+
             List<SongResponse> songResponses = songs.stream().map(song -> new SongResponse(
                     song.getId(),
                     song.getTitle(),
@@ -176,8 +175,10 @@ public class SongService {
                     song.getImageUrl(),
                     song.getGenre().getId(),
                     song.getGenre().getName()
-
             )).collect(Collectors.toList());
+
+            Collections.reverse(songResponses);
+
             Map<String, Object> data = new HashMap<>();
             data.put("songs", songResponses);
             return new ResponseObject("success", "Songs fetched successfully", data);
@@ -185,6 +186,7 @@ public class SongService {
             return new ResponseObject("error", "Failed to fetch songs: " + e.getMessage(), null);
         }
     }
+
 
 
     public String uploadImage(MultipartFile file, String namePath, Integer songId) {

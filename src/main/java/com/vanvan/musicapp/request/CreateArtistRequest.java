@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateArtistRequest {
     private String name;
+    private String bio;
 }

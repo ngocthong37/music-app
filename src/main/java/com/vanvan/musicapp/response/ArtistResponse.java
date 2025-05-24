@@ -14,4 +14,5 @@ public class ArtistResponse {
     private String name;
     private String imageUrl;
     private Long listenCount;
+    private String bio;
 }

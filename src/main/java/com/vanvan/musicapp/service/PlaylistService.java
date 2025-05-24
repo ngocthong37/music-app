@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,6 +58,8 @@ public class PlaylistService {
         try {
             Playlist playlist = playlistRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Playlist not found"));
+
+            ;
             return new ResponseObject("success", "Playlist fetched successfully", mapToResponse(playlist));
         } catch (Exception e) {
             return new ResponseObject("error", "Failed to fetch playlist: " + e.getMessage(), null);
@@ -151,6 +154,7 @@ public class PlaylistService {
 //            songResponse.setOrderIndex(playlistSong.getOrderIndex());
             songResponses.add(songResponse);
         }
+        Collections.reverse(songResponses);
         response.setSongs(songResponses);
 
         return response;
