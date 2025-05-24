@@ -51,7 +51,8 @@ public class ListeningCountService {
                     song.getFileUrl(),
                     song.getImageUrl(),
                     song.getGenre().getId(),
-                    song.getGenre().getName()
+                    song.getGenre().getName(),
+                    null
             );
 
             ListeningCountResponse response = new ListeningCountResponse();
@@ -84,7 +85,8 @@ public class ListeningCountService {
                                 song.getFileUrl(),
                                 song.getImageUrl(),
                                 song.getGenre().getId(),
-                                song.getGenre().getName()
+                                song.getGenre().getName(),
+                                null
                         );
                         ListeningCountResponse response = new ListeningCountResponse();
                         response.setId(count.getId());
@@ -123,6 +125,7 @@ public class ListeningCountService {
                                 song.getGenre().getId(),
                                 song.getGenre().getName(),
                                 listenCount,
+                                null,
                                 null
                         );
                     })
@@ -148,7 +151,7 @@ public class ListeningCountService {
                         Integer artistId = ((Number) result[0]).intValue();
                         String artistName = result[1] != null ? result[1].toString() : null;
                         Long listenCount = ((Number) result[2]).longValue();
-                        return new ArtistResponse(artistId, artistName, null, listenCount, null);
+                        return new ArtistResponse(artistId, artistName, null, listenCount, null, null);
                     })
                     .collect(Collectors.toList());
             return new ResponseObject("success", "Lấy top 10 nghệ sĩ được nghe nhiều nhất thành công", responses);

@@ -18,7 +18,8 @@ public class UtilsService {
                 song.getFileUrl(),
                 song.getImageUrl(),
                 song.getGenre() != null ? song.getGenre().getId() : null,
-                song.getGenre() != null ? song.getGenre().getName() : null
+                song.getGenre() != null ? song.getGenre().getName() : null,
+                null
         );
     }
 }

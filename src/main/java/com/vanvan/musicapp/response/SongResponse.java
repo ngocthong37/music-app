@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,8 +23,9 @@ public class SongResponse {
     private String genreName;
     private Long listenCount;
     private Long favoriteCount;
+    private Date createdAt;
 
-    public SongResponse(Integer id, String title, Integer artistId, String artistName, int duration, String fileUrl, String imageUrl, Integer genreId, String genreName) {
+    public SongResponse(Integer id, String title, Integer artistId, String artistName, int duration, String fileUrl, String imageUrl, Integer genreId, String genreName, Date createdAt) {
         this.id = id;
         this.title = title;
         this.artistId = artistId;
@@ -32,5 +35,6 @@ public class SongResponse {
         this.imageUrl = imageUrl;
         this.genreId = genreId;
         this.genreName = genreName;
+        this.createdAt = createdAt;
     }
 }

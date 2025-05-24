@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +22,7 @@ public class ArtistService {
     public ResponseObject getAllArtists() {
         List<ArtistResponse> artistDTOs = artistRepository.findAll()
                 .stream()
-                .map(artist -> new ArtistResponse(artist.getId(), artist.getName(), artist.getImageUrl(), null,artist.getBio()))
+                .map(artist -> new ArtistResponse(artist.getId(), artist.getName(), artist.getImageUrl(), null,artist.getBio(), artist.getCreatedAt()))
                 .collect(Collectors.toList());
         Collections.reverse(artistDTOs);
         Map<String, Object> result = new HashMap<>();
@@ -36,6 +33,7 @@ public class ArtistService {
     public ResponseObject createArtist(CreateArtistRequest request) {
         Artist artist = new Artist();
         artist.setName(request.getName());
+        artist.setCreatedAt(new Date());
         Artist savedArtist = artistRepository.save(artist);
         return new ResponseObject("success", "Artist created", savedArtist);
     }
@@ -51,6 +49,7 @@ public class ArtistService {
                 .orElseThrow(() -> new IllegalArgumentException("Artist not found"));
         artist.setName(request.getName());
         artist.setBio(request.getBio());
+        artist.setUpdatedAt(new Date());
         Artist updatedArtist = artistRepository.save(artist);
         return new ResponseObject("success", "Artist updated", updatedArtist);
     }

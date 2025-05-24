@@ -113,7 +113,8 @@ public class AlbumService {
                             song.getFileUrl(),
                             song.getImageUrl(),
                             song.getGenre().getId(),
-                            song.getGenre().getName()
+                            song.getGenre().getName(),
+                            null
                     );
                 })
                 .filter(Objects::nonNull)

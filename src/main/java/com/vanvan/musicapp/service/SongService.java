@@ -149,8 +149,8 @@ public class SongService {
                     song.getFileUrl(),
                     song.getImageUrl(),
                     song.getGenre().getId(),
-                    song.getGenre().getName()
-
+                    song.getGenre().getName(),
+                    song.getCreatedAt()
             )).collect(Collectors.toList());
             Collections.reverse(songResponses);
             Map<String, Object> data = new HashMap<>();
@@ -174,7 +174,8 @@ public class SongService {
                     song.getFileUrl(),
                     song.getImageUrl(),
                     song.getGenre().getId(),
-                    song.getGenre().getName()
+                    song.getGenre().getName(),
+                    null
             )).collect(Collectors.toList());
 
             Collections.reverse(songResponses);
@@ -207,7 +208,8 @@ public class SongService {
                     song.getFileUrl(),
                     song.getImageUrl(),
                     song.getGenre().getId(),
-                    song.getGenre().getName()
+                    song.getGenre().getName(),
+                    null
             )).collect(Collectors.toList());
 
             return new ResponseObject("success", "Songs found", responses);
@@ -235,7 +237,8 @@ public class SongService {
                     song.getFileUrl(),
                     song.getImageUrl(),
                     song.getGenre().getId(),
-                    song.getGenre().getName()
+                    song.getGenre().getName(),
+                    null
             )).collect(Collectors.toList());
 
             Map<String, Object> data = new HashMap<>();

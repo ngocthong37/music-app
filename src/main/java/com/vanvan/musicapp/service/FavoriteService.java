@@ -52,7 +52,8 @@ public class FavoriteService {
                     song.getFileUrl(),
                     song.getImageUrl(),
                     song.getGenre().getId(),
-                    song.getGenre().getName()
+                    song.getGenre().getName(),
+                    null
             );
 
             return new ResponseObject("success", "Thêm bài hát vào danh sách yêu thích thành công", songResponse);
@@ -98,7 +99,8 @@ public class FavoriteService {
                                 song.getFileUrl(),
                                 song.getImageUrl(),
                                 song.getGenre().getId(),
-                                song.getGenre().getName()
+                                song.getGenre().getName(),
+                                null
                         );
                     })
                     .collect(Collectors.toList());
@@ -134,7 +136,8 @@ public class FavoriteService {
                                 song.getGenre().getId(),
                                 song.getGenre().getName(),
                                 null,
-                                favoriteCount
+                                favoriteCount,
+                                null
                         );
                     })
                     .collect(Collectors.toList());

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -25,5 +26,9 @@ public class Artist {
 
     @OneToMany(mappedBy = "artist")
     private List<Song> songs;
+
+    private Date createdAt;
+
+    private Date updatedAt;
 
 }
