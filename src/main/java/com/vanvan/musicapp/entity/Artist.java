@@ -27,6 +27,10 @@ public class Artist {
     @OneToMany(mappedBy = "artist")
     private List<Song> songs;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     private Date createdAt;
 
     private Date updatedAt;

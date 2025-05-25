@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class CreateArtistRequest {
     private String name;
     private String bio;
+    private Integer userId;
 }

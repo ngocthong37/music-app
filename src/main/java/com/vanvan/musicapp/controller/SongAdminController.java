@@ -24,10 +24,12 @@ public class SongAdminController {
             @RequestParam("artistId") Integer artistId,
             @RequestParam("genreId") Integer genreId,
             @RequestParam(value = "lyrics", required = false) String lyrics,
+            @RequestParam("userId") Integer userId,
             @RequestParam("file") MultipartFile file
     ) {
-        return ResponseEntity.ok(songService.createSong(title, artistId, genreId, lyrics, file));
+        return ResponseEntity.ok(songService.createSong(title, artistId, genreId, userId, lyrics, file));
     }
+
 
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

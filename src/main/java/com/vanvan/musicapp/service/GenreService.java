@@ -1,7 +1,9 @@
 package com.vanvan.musicapp.service;
 
 import com.vanvan.musicapp.entity.Genre;
+import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.GenreRepository;
+import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.request.CreateGenreRequest;
 import com.vanvan.musicapp.response.GenreResponse;
 import com.vanvan.musicapp.response.ResponseObject;
@@ -9,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 public class GenreService {
 
     private final GenreRepository genreRepository;
+    private final UserRepository userRepository;
 
     public ResponseObject getAllGenres() {
         try {
@@ -32,6 +36,12 @@ public class GenreService {
     public ResponseObject createGenre(CreateGenreRequest request) {
         Genre genre = new Genre();
         genre.setName(request.getName());
+        Optional<User> optionalUser = userRepository.findById(request.getUserId());
+        if (optionalUser.isEmpty()) {
+            return new ResponseObject("error", "User not found", null);
+        }
+        genre.setUser(optionalUser.get());
+
         Genre savedGenre = genreRepository.save(genre);
         return new ResponseObject("success", "Genre created", savedGenre);
     }

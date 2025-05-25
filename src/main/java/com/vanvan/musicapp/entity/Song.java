@@ -26,6 +26,9 @@ public class Song {
     @JoinColumn(name = "genre_id", nullable = false)
     private Genre genre;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     private int duration;
 

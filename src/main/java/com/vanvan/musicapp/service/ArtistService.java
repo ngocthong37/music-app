@@ -1,7 +1,9 @@
 package com.vanvan.musicapp.service;
 
 import com.vanvan.musicapp.entity.Artist;
+import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.ArtistRepository;
+import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.request.CreateArtistRequest;
 import com.vanvan.musicapp.response.ArtistResponse;
 import com.vanvan.musicapp.response.ResponseObject;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 public class ArtistService {
     private ArtistRepository artistRepository;
     private StorageService storageService;
+    private UserRepository userRepository;
 
     public ResponseObject getAllArtists() {
         List<ArtistResponse> artistDTOs = artistRepository.findAll()
@@ -33,10 +36,19 @@ public class ArtistService {
     public ResponseObject createArtist(CreateArtistRequest request) {
         Artist artist = new Artist();
         artist.setName(request.getName());
+        artist.setBio(request.getBio()); // set bio
         artist.setCreatedAt(new Date());
+
+        Optional<User> optionalUser = userRepository.findById(request.getUserId());
+        if (optionalUser.isEmpty()) {
+            return new ResponseObject("error", "User not found", null);
+        }
+        artist.setUser(optionalUser.get());
+
         Artist savedArtist = artistRepository.save(artist);
         return new ResponseObject("success", "Artist created", savedArtist);
     }
+
 
     public String uploadImage(MultipartFile file, String namePath, Integer songId) {
         String imageUrl = storageService.uploadImages(file, namePath);

@@ -34,7 +34,7 @@ public class ArtistController {
         return artistService.uploadImage(file, namePath, artistId);
     }
 
-    @PostMapping
+    @PostMapping("admin/artists")
     public ResponseEntity<ResponseObject> createArtist(@RequestBody CreateArtistRequest request) {
         return ResponseEntity.ok(artistService.createArtist(request));
     }

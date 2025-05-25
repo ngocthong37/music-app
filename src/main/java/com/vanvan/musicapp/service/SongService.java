@@ -4,9 +4,11 @@ import com.mpatric.mp3agic.Mp3File;
 import com.vanvan.musicapp.entity.Artist;
 import com.vanvan.musicapp.entity.Genre;
 import com.vanvan.musicapp.entity.Song;
+import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.ArtistRepository;
 import com.vanvan.musicapp.repository.GenreRepository;
 import com.vanvan.musicapp.repository.SongRepository;
+import com.vanvan.musicapp.repository.UserRepository;
 import com.vanvan.musicapp.request.SongRequest;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.response.SongResponse;
@@ -25,17 +27,19 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class SongService {
-
     private final SongRepository songRepository;
     private final ArtistRepository artistRepository;
     private final GenreRepository genreRepository;
     private final StorageService storageService;
+    private final UserRepository userRepository;
 
-    public ResponseObject createSong(String title, Integer artistId, Integer genreId, String lyrics, MultipartFile file) {
+    public ResponseObject createSong(String title, Integer artistId, Integer genreId, Integer userId, String lyrics, MultipartFile file) {
         Artist artist = artistRepository.findById(artistId)
                 .orElseThrow(() -> new RuntimeException("Artist not found"));
         Genre genre = genreRepository.findById(genreId)
                 .orElseThrow(() -> new RuntimeException("Genre not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         try {
             String originalFileName = file.getOriginalFilename();
@@ -52,7 +56,7 @@ public class SongService {
             Path filePath = uploadDir.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            // 👇 Tự động lấy duration từ file MP3
+            // 👇 Lấy duration từ file MP3
             Mp3File mp3File = new Mp3File(filePath.toFile());
             int durationInSeconds = (int) mp3File.getLengthInSeconds();
 
@@ -60,6 +64,7 @@ public class SongService {
             song.setTitle(title);
             song.setArtist(artist);
             song.setGenre(genre);
+            song.setUser(user); // 👈 Gán user vào bài hát
             song.setDuration(durationInSeconds);
             song.setFileUrl("/api/v1/musics/" + fileName);
             song.setLyrics(lyrics);
@@ -67,7 +72,7 @@ public class SongService {
 
             Song savedSong = songRepository.save(song);
 
-            return new ResponseObject("success", "song created successfully", savedSong.getId());
+            return new ResponseObject("success", "Song created successfully", savedSong.getId());
 
         } catch (Exception e) {
             return new ResponseObject("error", "Failed to create song: " + e.getMessage(), null);
