@@ -12,6 +12,7 @@ import com.vanvan.musicapp.response.SongResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -144,7 +145,8 @@ public class ListeningCountService {
 
     public ResponseObject getTop10ArtistsByListenCount() {
         try {
-            List<Object[]> topArtists = listeningCountRepository.findTopArtistsByListenCount();
+            LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+            List<Object[]> topArtists = listeningCountRepository.findTopArtistsByListenCount(thirtyDaysAgo);
             List<ArtistResponse> responses = topArtists.stream()
                     .limit(10)
                     .map(result -> {

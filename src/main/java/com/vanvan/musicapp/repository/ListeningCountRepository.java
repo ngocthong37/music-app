@@ -4,7 +4,9 @@ import com.vanvan.musicapp.entity.ListeningCount;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,9 +25,10 @@ public interface ListeningCountRepository extends JpaRepository<ListeningCount, 
             "FROM ListeningCount lc " +
             "JOIN Song s ON lc.songId = s.id " +
             "WHERE s.artist IS NOT NULL " +
+            "AND lc.listenTime >= :thirtyDaysAgo " +
             "GROUP BY s.artist.id, s.artist.name " +
             "ORDER BY totalCount DESC")
-    List<Object[]> findTopArtistsByListenCount();
+    List<Object[]> findTopArtistsByListenCount(@Param("thirtyDaysAgo") LocalDateTime thirtyDaysAgo);
 
     @Query("SELECT lc.songId, SUM(lc.count) as totalCount " +
             "FROM ListeningCount lc " +

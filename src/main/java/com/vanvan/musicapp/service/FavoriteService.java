@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -117,7 +118,8 @@ public class FavoriteService {
 
     public ResponseObject getTop10FavoriteSongs() {
         try {
-            List<Object[]> topSongs = favoriteRepository.findTopFavoriteSongs();
+            LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+            List<Object[]> topSongs = favoriteRepository.findTopFavoriteSongs(thirtyDaysAgo);
             List<SongResponse> responses = topSongs.stream()
                     .limit(10)
                     .map(result -> {
@@ -148,8 +150,9 @@ public class FavoriteService {
     }
 
     public ResponseObject getTop10FavoriteGenres() {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         try {
-            List<Object[]> topGenres = favoriteRepository.findTopFavoriteGenres();
+            List<Object[]> topGenres = favoriteRepository.findTopFavoriteGenres(thirtyDaysAgo);
             List<GenreResponse> responses = topGenres.stream()
                     .limit(10)
                     .map(result -> {
