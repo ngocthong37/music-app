@@ -8,10 +8,10 @@
 		<version>3.2.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.quocluan</groupId>
+	<groupId>com.vanvan</groupId>
 	<artifactId>music-app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>kdmaylanh</name>
+	<name>music_app</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>17</java.version>
