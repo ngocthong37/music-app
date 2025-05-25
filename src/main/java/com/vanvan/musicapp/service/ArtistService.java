@@ -22,7 +22,7 @@ public class ArtistService {
     public ResponseObject getAllArtists() {
         List<ArtistResponse> artistDTOs = artistRepository.findAll()
                 .stream()
-                .map(artist -> new ArtistResponse(artist.getId(), artist.getName(), artist.getImageUrl(), null,artist.getBio(), artist.getCreatedAt()))
+                .map(artist -> new ArtistResponse(artist.getId(), artist.getName(), artist.getImageUrl(), null,artist.getSongs().size(), artist.getBio(), artist.getCreatedAt()))
                 .collect(Collectors.toList());
         Collections.reverse(artistDTOs);
         Map<String, Object> result = new HashMap<>();

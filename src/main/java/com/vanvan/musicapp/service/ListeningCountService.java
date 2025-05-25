@@ -153,7 +153,7 @@ public class ListeningCountService {
                         Integer artistId = ((Number) result[0]).intValue();
                         String artistName = result[1] != null ? result[1].toString() : null;
                         Long listenCount = ((Number) result[2]).longValue();
-                        return new ArtistResponse(artistId, artistName, null, listenCount, null, null);
+                        return new ArtistResponse(artistId, artistName, null, listenCount, null, null, null);
                     })
                     .collect(Collectors.toList());
             return new ResponseObject("success", "Lấy top 10 nghệ sĩ được nghe nhiều nhất thành công", responses);

@@ -16,6 +16,7 @@ public class ArtistResponse {
     private String name;
     private String imageUrl;
     private Long listenCount;
+    private Integer numberOfSongs;
     private String bio;
     private Date createdAt;
 }
