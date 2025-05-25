@@ -7,10 +7,7 @@ import com.vanvan.musicapp.entity.Token;
 import com.vanvan.musicapp.entity.User;
 import com.vanvan.musicapp.repository.TokenRepository;
 import com.vanvan.musicapp.repository.UserRepository;
-import com.vanvan.musicapp.request.AuthenticationRequest;
-import com.vanvan.musicapp.request.ForgotPasswordRequest;
-import com.vanvan.musicapp.request.LogOutRequest;
-import com.vanvan.musicapp.request.RegisterRequest;
+import com.vanvan.musicapp.request.*;
 import com.vanvan.musicapp.response.AuthenticationResponse;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.security.JwtService;
@@ -223,6 +220,20 @@ public class AuthenticationService {
         userRepository.save(user);
 
         return new ResponseObject("success", "Xác thực tài khoản thành công", user.getId());
+    }
+
+    public ResponseObject updatePassword(UpdatePasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            return new ResponseObject("error", "Mật khẩu hiện tại không đúng", null);
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        User updatedUser = userRepository.save(user);
+
+        return new ResponseObject("success", "Cập nhật mật khẩu thành công", updatedUser.getId());
     }
 
 }

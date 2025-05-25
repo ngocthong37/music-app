@@ -11,7 +11,6 @@ import com.vanvan.musicapp.response.SongResponse;
 import com.vanvan.musicapp.utils.UtilsService;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

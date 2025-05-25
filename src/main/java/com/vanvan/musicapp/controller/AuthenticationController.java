@@ -86,4 +86,15 @@ public class AuthenticationController {
         return ResponseEntity.ok(authenticationService.verifyAccount(token));
     }
 
+    @PostMapping("auth/update-password")
+    public ResponseEntity<ResponseObject> updatePassword(@RequestBody UpdatePasswordRequest request) {
+        try {
+            ResponseObject response = authenticationService.updatePassword(request);
+            return ResponseEntity.status(response.getStatus().equals("success") ? 200 : 400).body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ResponseObject("error", "Cập nhật mật khẩu thất bại", null));
+        }
+    }
+
 }
