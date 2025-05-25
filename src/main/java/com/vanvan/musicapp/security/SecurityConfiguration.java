@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.Customizer;
@@ -21,16 +22,22 @@ public class SecurityConfiguration {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers(
-                                "/api/v1/**",
+                                "/api/v1/genres/**",
+                                "/api/v1/auth/**",
+                                "/api/v1/musics/**",
+                                "/api/v1/songs/**",
+                                "/api/v1/recommendations/**",
                                 "/v3/api-docs/**",
-                                "/swagger-resources",
                                 "/swagger-resources/**",
                                 "/configuration/ui",
                                 "/configuration/security",
@@ -38,13 +45,31 @@ public class SecurityConfiguration {
                                 "/webjars/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-//                        .requestMatchers("/api/v1/management/**").hasRole(ADMIN.name())
-//                        .requestMatchers("/api/v1/cart/**").hasRole(CUSTOMER.name())
-//                        .requestMatchers("/api/v1/customer/**").hasRole(CUSTOMER.name())
-//                        .requestMatchers("/api/v1/invoice/**").hasRole(CUSTOMER.name())
-//                        .requestMatchers("/api/v1/order/**").hasRole(CUSTOMER.name())
-//                        .requestMatchers("/api/v1/reviews/**").hasRole(CUSTOMER.name())
+
+                        // ADMIN-only
+                        .requestMatchers("/api/v1/admin/**").hasRole(ADMIN.name())
+                        // CUSTOMER-only
+                        .requestMatchers(
+                                "/api/v1/favorite/add",
+                                "/api/v1/favorite/remove",
+                                "/api/v1/favorite/get-by-user-id/**",
+                                "/api/v1/playlists/**",
+                                "/api/v1/listening-counts/user/**"
+                        ).hasRole(CUSTOMER.name())
+                        // Shared (CUSTOMER + ADMIN)
+                        .requestMatchers(
+                                "/api/v1/auth/update-password",
+                                "/api/v1/auth/log-out",
+                                "/api/v1/listening-counts/**",
+                                "/api/v1/users/**",
+                                "/api/v1/albums/**"
+                        ).hasAnyRole(CUSTOMER.name(), ADMIN.name())
+                        // All others require authentication
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedHandler(accessDeniedHandler)
+                        .authenticationEntryPoint(authenticationEntryPoint)
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)

@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ArtistController {
 
     private final ArtistService artistService;
-    private final ArtistRepository artistRepository;
 
     @GetMapping("artists/get-all")
     public ResponseEntity<ResponseObject> getAllArtists() {
