@@ -19,4 +19,8 @@ public class Genre {
 
     @OneToMany(mappedBy = "genre")
     private List<Album> albums; // Mối quan hệ với Album
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }

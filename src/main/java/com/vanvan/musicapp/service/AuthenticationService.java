@@ -86,11 +86,11 @@ public class AuthenticationService {
         String status = account.getStatus();
 
         Boolean isVerify = account.getIsVerified();
-        if (!isVerify) {
+        if (!isVerify && account.getRole() == Role.CUSTOMER) {
             throw new InactiveAccountException("Tài khoản của bạn chưa được kích hoạt. Vui lòng vào email để kích hoạt.");
         }
 
-        if (status != null && status.equals("NOT_ACTIVE")) {
+        if (status != null && status.equals("NOT_ACTIVE") && account.getRole() == Role.CUSTOMER) {
             throw new InactiveAccountException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
         }
 

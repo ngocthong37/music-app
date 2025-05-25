@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ArtistController {
 
     private final ArtistService artistService;
-    private final ArtistRepository artistRepository;
 
     @GetMapping("artists/get-all")
     public ResponseEntity<ResponseObject> getAllArtists() {
@@ -29,7 +28,7 @@ public class ArtistController {
         return artistService.uploadImage(file, namePath, artistId);
     }
 
-    @PostMapping
+    @PostMapping("admin")
     public ResponseEntity<ResponseObject> createArtist(@RequestBody CreateArtistRequest request) {
         return ResponseEntity.ok(artistService.createArtist(request));
     }

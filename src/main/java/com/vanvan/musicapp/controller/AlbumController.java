@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/albums")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AlbumController {
 
     private final AlbumService albumService;
 
-    @PostMapping("/create")
+    @PostMapping("admin/albums/create")
     public ResponseEntity<ResponseObject> createAlbum(@RequestBody CreateAlbumRequest request) {
         ResponseObject response = albumService.createAlbum(request);
         if ("success".equals(response.getStatus())) {
@@ -26,24 +26,24 @@ public class AlbumController {
         }
     }
 
-    @GetMapping("/get-all")
+    @GetMapping("albums/get-all")
     public ResponseEntity<ResponseObject> getAllAlbums() {
         ResponseObject response = albumService.getAllAlbums();
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/get-by-id/{id}")
+    @GetMapping("albums/get-by-id/{id}")
     public ResponseEntity<ResponseObject> getAlbumById(@PathVariable Integer id) {
         return ResponseEntity.ok(albumService.getAlbumById(id));
     }
 
-    @PostMapping("/upload-image-cover")
+    @PostMapping("admin/albums/upload-image-cover")
     public String uploadImageSong(@RequestParam("namePath") String namePath, @RequestParam("file") MultipartFile file,
                                   @RequestParam("albumId") Integer albumId) {
         return albumService.uploadImage(file, namePath, albumId);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("admin/albums/{id}")
     public ResponseEntity<ResponseObject> updateAlbum(@PathVariable Integer id, @RequestBody CreateAlbumRequest request) {
         ResponseObject response = albumService.updateAlbum(id, request);
         if ("success".equals(response.getStatus())) {
@@ -53,7 +53,7 @@ public class AlbumController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("admin/albums/{id}")
     public ResponseEntity<ResponseObject> deleteAlbum(@PathVariable Integer id) {
         ResponseObject response = albumService.deleteAlbum(id);
         if ("success".equals(response.getStatus())) {
