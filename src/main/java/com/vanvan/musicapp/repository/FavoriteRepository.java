@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface FavoriteRepository extends JpaRepository<Favorite, Integer> {
     List<Favorite> findByUser(User user);
@@ -28,4 +29,6 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Integer> {
             "GROUP BY s.genre.id, s.genre.name " +
             "ORDER BY favoriteCount DESC")
     List<Object[]> findTopFavoriteGenres();
+
+    List<Favorite> findByUserIdIn(Set<Integer> userIds);
 }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @AllArgsConstructor
@@ -99,8 +100,19 @@ public class RecommendationService {
 
     public ResponseObject getCollaborativeRecommendations(Integer userId, int limit) {
         try {
-            List<ListeningCount> allListeningCounts = listeningCountRepository.findAll();
-            List<Favorite> allFavorites = favoriteRepository.findAll();
+            // Tối ưu: Chỉ lấy dữ liệu cần thiết
+            List<ListeningCount> allListeningCounts = listeningCountRepository.findByUserIdIn(
+                    Stream.concat(
+                            Stream.of(userId),
+                            favoriteRepository.findAll().stream().map(fav -> fav.getUser().getId())
+                    ).collect(Collectors.toSet())
+            );
+            List<Favorite> allFavorites = favoriteRepository.findByUserIdIn(
+                    Stream.concat(
+                            Stream.of(userId),
+                            allListeningCounts.stream().map(ListeningCount::getUserId)
+                    ).collect(Collectors.toSet())
+            );
 
             Map<Integer, Map<String, Double>> songVectors = songVectorService.getSongVectors();
 
@@ -113,13 +125,13 @@ public class RecommendationService {
                     .filter(fav -> fav.getUser().getId().equals(userId))
                     .forEach(fav -> targetUserSongIds.add(fav.getSong().getId()));
 
-            // Tạo vector người dùng mục tiêu
+            // Tạo vector người dùng mục tiêu (chuẩn hóa)
             Map<String, Double> targetUserVector = new HashMap<>();
             for (Integer songId : targetUserSongIds) {
                 Map<String, Double> songVec = songVectors.get(songId);
                 if (songVec != null) {
                     for (Map.Entry<String, Double> e : songVec.entrySet()) {
-                        targetUserVector.merge(e.getKey(), e.getValue(), Double::sum);
+                        targetUserVector.merge(e.getKey(), e.getValue() / targetUserSongIds.size(), Double::sum);
                     }
                 }
             }
@@ -146,17 +158,18 @@ public class RecommendationService {
                     Map<String, Double> songVec = songVectors.get(songId);
                     if (songVec != null) {
                         for (Map.Entry<String, Double> e : songVec.entrySet()) {
-                            otherUserVector.merge(e.getKey(), e.getValue(), Double::sum);
+                            otherUserVector.merge(e.getKey(), e.getValue() / otherUserSongIds.size(), Double::sum);
                         }
                     }
                 }
 
-                double similarity = songVectorService.calculateCosineSimilarity(targetUserVector, otherUserVector);
+                double similarity = songVectorService.calculatePearsonCorrelation(targetUserVector, otherUserVector);
                 userSimilarity.put(otherUserId, similarity);
             }
 
-            // Lấy top 5 user tương tự
+            // Lấy top 5 user tương tự (chỉ lấy similarity dương)
             List<Integer> similarUsers = userSimilarity.entrySet().stream()
+                    .filter(entry -> entry.getValue() > 0)
                     .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
                     .limit(5)
                     .map(Map.Entry::getKey)
@@ -180,13 +193,28 @@ public class RecommendationService {
                         .forEach(recommendedSongIds::add);
             }
 
-            // Trả về danh sách gợi ý dưới dạng SongResponse
+            // Trả về danh sách gợi ý
             List<SongResponse> recommendedSongs = recommendedSongIds.stream()
                     .map(songId -> songRepository.findById(songId).orElse(null))
                     .filter(Objects::nonNull)
                     .map(utilsService::convertToSongResponse)
                     .limit(limit)
                     .toList();
+
+            // Bổ sung bài hát phổ biến nếu thiếu
+            if (recommendedSongs.size() < limit) {
+                List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
+                List<SongResponse> popularSongs = topSongs.stream()
+                        .map(obj -> (Integer) obj[0])
+                        .map(songId -> songRepository.findById(songId).orElse(null))
+                        .filter(Objects::nonNull)
+                        .filter(song -> !interactedSongs.contains(song.getId()))
+                        .map(utilsService::convertToSongResponse)
+                        .limit(limit - recommendedSongs.size())
+                        .toList();
+                recommendedSongs = new ArrayList<>(recommendedSongs);
+                recommendedSongs.addAll(popularSongs);
+            }
 
             return new ResponseObject("success", "Recommendations generated successfully", recommendedSongs);
 
@@ -218,9 +246,28 @@ public class RecommendationService {
                 }
             }
 
-            List<Object> finalList = new ArrayList<>(uniqueMap.values()).stream()
-                    .limit(limit)
-                    .collect(Collectors.toList());
+            List<Object> finalList = new ArrayList<>(uniqueMap.values());
+
+            // Bổ sung bài hát phổ biến nếu thiếu
+            if (finalList.size() < limit) {
+                Set<Integer> existingIds = finalList.stream()
+                        .filter(song -> song instanceof SongResponse)
+                        .map(song -> ((SongResponse) song).getId())
+                        .collect(Collectors.toSet());
+                List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
+                List<Object> popularSongs = topSongs.stream()
+                        .map(obj -> (Integer) obj[0])
+                        .map(songId -> songRepository.findById(songId).orElse(null))
+                        .filter(Objects::nonNull)
+                        .filter(song -> !existingIds.contains(song.getId()))
+                        .map(utilsService::convertToSongResponse)
+                        .limit(limit - finalList.size())
+                        .collect(Collectors.toList());
+                finalList.addAll(popularSongs);
+            }
+
+            // Giới hạn danh sách cuối cùng
+            finalList = finalList.stream().limit(limit).collect(Collectors.toList());
 
             // Bọc trong map với key "songs"
             Map<String, Object> responseData = new HashMap<>();

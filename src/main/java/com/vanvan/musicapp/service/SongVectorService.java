@@ -17,9 +17,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SongVectorService {
@@ -112,5 +110,39 @@ public class SongVectorService {
 
         if (norm1 == 0 || norm2 == 0) return 0.0;
         return dotProduct / (norm1 * norm2);
+    }
+
+    public double calculatePearsonCorrelation(Map<String, Double> vector1, Map<String, Double> vector2) {
+        // Lấy tất cả các key chung giữa hai vector
+        Set<String> commonKeys = new HashSet<>(vector1.keySet());
+        commonKeys.retainAll(vector2.keySet());
+
+        if (commonKeys.isEmpty()) {
+            return 0.0; // Không có key chung, tương quan = 0
+        }
+
+        // Tính trung bình
+        double mean1 = commonKeys.stream().mapToDouble(vector1::get).average().orElse(0.0);
+        double mean2 = commonKeys.stream().mapToDouble(vector2::get).average().orElse(0.0);
+
+        // Tính tử số và mẫu số của công thức Pearson
+        double numerator = 0.0;
+        double sumSquare1 = 0.0;
+        double sumSquare2 = 0.0;
+
+        for (String key : commonKeys) {
+            double val1 = vector1.get(key) - mean1;
+            double val2 = vector2.get(key) - mean2;
+            numerator += val1 * val2;
+            sumSquare1 += val1 * val1;
+            sumSquare2 += val2 * val2;
+        }
+
+        // Tránh chia cho 0
+        if (sumSquare1 == 0 || sumSquare2 == 0) {
+            return 0.0;
+        }
+
+        return numerator / Math.sqrt(sumSquare1 * sumSquare2);
     }
 }
