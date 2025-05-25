@@ -84,9 +84,16 @@ public class AuthenticationService {
         var account = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + request.getEmail()));
         String status = account.getStatus();
+
+        Boolean isVerify = account.getIsVerified();
+        if (!isVerify) {
+            throw new InactiveAccountException("Tài khoản của bạn chưa được kích hoạt. Vui lòng vào email để kích hoạt.");
+        }
+
         if (status != null && status.equals("NOT_ACTIVE")) {
             throw new InactiveAccountException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
         }
+
         var jwtToken = jwtService.generateToken(account);
         var refreshToken = jwtService.generateRefreshToken(account);
         revokeAllUserTokens(account);
