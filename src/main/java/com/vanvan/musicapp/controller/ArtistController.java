@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/v1/admin/artists")
+@RequestMapping("/api/v1/")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ArtistController {
@@ -23,7 +23,7 @@ public class ArtistController {
         return ResponseEntity.ok(artistService.getAllArtists());
     }
 
-    @PostMapping("/upload-artist-avatar")
+    @PostMapping("admin/artists/upload-artist-avatar")
     public String uploadImageSong(@RequestParam("namePath") String namePath, @RequestParam("file") MultipartFile file,
                                   @RequestParam("artistId") Integer artistId) {
         return artistService.uploadImage(file, namePath, artistId);
@@ -34,12 +34,12 @@ public class ArtistController {
         return ResponseEntity.ok(artistService.createArtist(request));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("admin/artists/{id}")
     public ResponseEntity<ResponseObject> updateArtist(@PathVariable Integer id, @RequestBody CreateArtistRequest request) {
         return ResponseEntity.ok(artistService.updateArtist(id, request));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("admin/artists/{id}")
     public ResponseEntity<ResponseObject> deleteArtist(@PathVariable Integer id) {
         return ResponseEntity.ok(artistService.deleteArtist(id));
     }
