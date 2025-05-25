@@ -23,6 +23,11 @@ public class ArtistController {
         return ResponseEntity.ok(artistService.getAllArtists());
     }
 
+    @GetMapping("admin/artists/get-all")
+    public ResponseEntity<ResponseObject> getAllArtistsAdmin() {
+        return ResponseEntity.ok(artistService.getAllArtists());
+    }
+
     @PostMapping("admin/artists/upload-artist-avatar")
     public String uploadImageSong(@RequestParam("namePath") String namePath, @RequestParam("file") MultipartFile file,
                                   @RequestParam("artistId") Integer artistId) {
