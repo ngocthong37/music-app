@@ -18,7 +18,7 @@ public class ArtistController {
     private final ArtistService artistService;
     private final ArtistRepository artistRepository;
 
-    @GetMapping("/get-all")
+    @GetMapping("artists/get-all")
     public ResponseEntity<ResponseObject> getAllArtists() {
         return ResponseEntity.ok(artistService.getAllArtists());
     }
