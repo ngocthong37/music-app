@@ -37,6 +37,7 @@ public class SecurityConfiguration {
                                 "/api/v1/musics/**",
                                 "/api/v1/songs/**",
                                 "/api/v1/recommendations/**",
+                                "/api/v1/albums/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/configuration/ui",
@@ -61,8 +62,7 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/update-password",
                                 "/api/v1/auth/log-out",
                                 "/api/v1/listening-counts/**",
-                                "/api/v1/users/**",
-                                "/api/v1/albums/**"
+                                "/api/v1/users/**"
                         ).hasAnyRole(CUSTOMER.name(), ADMIN.name())
                         // All others require authentication
                         .anyRequest().authenticated()

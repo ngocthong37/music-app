@@ -25,7 +25,7 @@ public class GenreController {
         return ResponseEntity.ok(genreService.getAllGenres());
     }
 
-    @PostMapping
+    @PostMapping("admin/genres")
     public ResponseEntity<ResponseObject> createGenre(@RequestBody CreateGenreRequest request) {
         return ResponseEntity.ok(genreService.createGenre(request));
     }
