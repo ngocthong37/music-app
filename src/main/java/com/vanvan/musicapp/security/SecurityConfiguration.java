@@ -38,6 +38,7 @@ public class SecurityConfiguration {
                                 "/api/v1/songs/**",
                                 "/api/v1/recommendations/**",
                                 "/api/v1/albums/**",
+                                "/api/v1/artists/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/configuration/ui",
