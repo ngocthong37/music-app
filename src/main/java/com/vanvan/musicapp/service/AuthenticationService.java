@@ -103,7 +103,7 @@ public class AuthenticationService {
                 .refreshToken(refreshToken)
                 .role(String.valueOf(account.getRole()))
                 .userId(account.getId())
-                .userName(account.getUsername())
+                .userName(account.getName())
                 .build();
     }
 

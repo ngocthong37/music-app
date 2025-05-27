@@ -39,6 +39,7 @@ public class SecurityConfiguration {
                                 "/api/v1/recommendations/**",
                                 "/api/v1/albums/**",
                                 "/api/v1/artists/**",
+                                "/api/v1/listening-counts/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/configuration/ui",
@@ -53,16 +54,16 @@ public class SecurityConfiguration {
                         // CUSTOMER-only
                         .requestMatchers(
                                 "/api/v1/favorite/add",
-                                "/api/v1/favorite/remove",
-                                "/api/v1/favorite/get-by-user-id/**",
+                                "/api/v1/favorites/remove",
+                                "/api/v1/favorites/get-by-user-id/**",
                                 "/api/v1/playlists/**",
                                 "/api/v1/listening-counts/user/**"
                         ).hasRole(CUSTOMER.name())
                         // Shared (CUSTOMER + ADMIN)
                         .requestMatchers(
+                                "api/v1/favorites/**",
                                 "/api/v1/auth/update-password",
                                 "/api/v1/auth/log-out",
-                                "/api/v1/listening-counts/**",
                                 "/api/v1/users/**"
                         ).hasAnyRole(CUSTOMER.name(), ADMIN.name())
                         // All others require authentication

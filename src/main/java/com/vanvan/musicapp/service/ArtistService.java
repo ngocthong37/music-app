@@ -62,6 +62,12 @@ public class ArtistService {
         artist.setName(request.getName());
         artist.setBio(request.getBio());
         artist.setUpdatedAt(new Date());
+        Optional<User> optionalUser = userRepository.findById(request.getUserId());
+        if (optionalUser.isEmpty()) {
+            return new ResponseObject("error", "User not found", null);
+        }
+        artist.setUser(optionalUser.get());
+
         Artist updatedArtist = artistRepository.save(artist);
         return new ResponseObject("success", "Artist updated", updatedArtist);
     }
