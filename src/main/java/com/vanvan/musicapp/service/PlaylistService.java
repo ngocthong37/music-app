@@ -13,6 +13,7 @@ import com.vanvan.musicapp.response.PlaylistResponse;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.response.SongResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +34,16 @@ public class PlaylistService {
 
     public ResponseObject createPlaylist(PlaylistCreateRequest request) {
         try {
+            if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+                return new ResponseObject("error", "Tiêu đề playlist không được để trống", null);
+            }
+
             User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+
+            if (playlistRepository.existsByTitleAndUser(request.getTitle(), user)) {
+                return new ResponseObject("error", "PlayList name này đã tồn tại", null);
+            }
 
             Playlist playlist = new Playlist();
             playlist.setTitle(request.getTitle());
@@ -47,9 +56,11 @@ public class PlaylistService {
                 addSongsToPlaylist(savedPlaylist.getId(), request.getSongIds());
             }
 
-            return new ResponseObject("success", "Playlist created successfully", mapToResponse(savedPlaylist));
+            return new ResponseObject("success", "Tạo playlist thành công", mapToResponse(savedPlaylist));
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseObject("error", "Playlist với tiêu đề này đã tồn tại", null);
         } catch (Exception e) {
-            return new ResponseObject("error", "Failed to create playlist: " + e.getMessage(), null);
+            return new ResponseObject("error", "Tạo playlist thất bại: " + e.getMessage(), null);
         }
     }
 

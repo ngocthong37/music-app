@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface PlayListRepository extends JpaRepository<Playlist, Integer> {
     List<Playlist> findByUser(User user);
+    boolean existsByTitleAndUser(String title, User user);
 }
