@@ -230,7 +230,7 @@ public class AuthenticationService {
     }
 
     public ResponseObject updatePassword(UpdatePasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findById(request.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
