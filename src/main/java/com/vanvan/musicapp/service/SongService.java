@@ -5,10 +5,7 @@ import com.vanvan.musicapp.entity.Artist;
 import com.vanvan.musicapp.entity.Genre;
 import com.vanvan.musicapp.entity.Song;
 import com.vanvan.musicapp.entity.User;
-import com.vanvan.musicapp.repository.ArtistRepository;
-import com.vanvan.musicapp.repository.GenreRepository;
-import com.vanvan.musicapp.repository.SongRepository;
-import com.vanvan.musicapp.repository.UserRepository;
+import com.vanvan.musicapp.repository.*;
 import com.vanvan.musicapp.request.SongRequest;
 import com.vanvan.musicapp.response.ResponseObject;
 import com.vanvan.musicapp.response.SongResponse;
@@ -32,6 +29,7 @@ public class SongService {
     private final GenreRepository genreRepository;
     private final StorageService storageService;
     private final UserRepository userRepository;
+    private final ListeningCountRepository listeningCountRepository;
 
     public ResponseObject createSong(String title, Integer artistId, Integer genreId, Integer userId, String lyrics, MultipartFile file) {
         Artist artist = artistRepository.findById(artistId)
@@ -169,6 +167,15 @@ public class SongService {
     public ResponseObject getAllSongs() {
         try {
             List<Song> songs = songRepository.findAll();
+            List<Object[]> listenCounts = listeningCountRepository.findTopSongsByListenCount();
+
+            // Create a map of songId to listenCount for efficient lookup
+            Map<Integer, Long> listenCountMap = listenCounts.stream()
+                    .collect(Collectors.toMap(
+                            result -> (Integer) result[0],
+                            result -> (Long) result[1],
+                            (existing, replacement) -> existing // Handle duplicates, keep existing
+                    ));
 
             List<SongResponse> songResponses = songs.stream().map(song -> new SongResponse(
                     song.getId(),
@@ -180,6 +187,8 @@ public class SongService {
                     song.getImageUrl(),
                     song.getGenre().getId(),
                     song.getGenre().getName(),
+                    listenCountMap.getOrDefault(song.getId(), 0L),
+                    null,
                     null
             )).collect(Collectors.toList());
 
