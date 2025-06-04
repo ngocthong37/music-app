@@ -13,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -112,35 +109,34 @@ public class ListeningCountService {
                         Integer songId = (Integer) result[0];
                         Long listenCount = (Long) result[1];
 
-                        Song song = songRepository.findById(songId)
-                                .orElseThrow(() -> new RuntimeException("Bài hát không tồn tại"));
-
-                        return new SongResponse(
-                                song.getId(),
-                                song.getTitle(),
-                                song.getArtist() != null ? song.getArtist().getId() : null,
-                                song.getArtist() != null ? song.getArtist().getName() : null,
-                                song.getDuration(),
-                                song.getFileUrl(),
-                                song.getImageUrl(),
-                                song.getGenre().getId(),
-                                song.getGenre().getName(),
-                                listenCount,
-                                null,
-                                null
-                        );
+                        return songRepository.findById(songId)
+                                .map(song -> new SongResponse(
+                                        song.getId(),
+                                        song.getTitle(),
+                                        song.getArtist() != null ? song.getArtist().getId() : null,
+                                        song.getArtist() != null ? song.getArtist().getName() : null,
+                                        song.getDuration(),
+                                        song.getFileUrl(),
+                                        song.getImageUrl(),
+                                        song.getGenre().getId(),
+                                        song.getGenre().getName(),
+                                        listenCount,
+                                        null,
+                                        null
+                                ))
+                                .orElse(null);
                     })
+                    .filter(Objects::nonNull)
                     .sorted((a, b) -> Long.compare(b.getListenCount(), a.getListenCount())) // sắp xếp giảm dần
                     .limit(10)
                     .collect(Collectors.toList());
-
-            Map<String, Object> data = new HashMap<>();
 
             return new ResponseObject("success", "Lấy top 10 bài hát được nghe nhiều nhất thành công", responses);
         } catch (Exception e) {
             return new ResponseObject("error", "Lấy top 10 bài hát thất bại: " + e.getMessage(), null);
         }
     }
+
 
 
     public ResponseObject getTop10ArtistsByListenCount() {
