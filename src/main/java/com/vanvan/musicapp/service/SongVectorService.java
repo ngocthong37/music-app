@@ -27,6 +27,14 @@ public class SongVectorService {
     @Getter
     private Map<Integer, Map<String, Double>> songVectors; // Lưu trữ vector TF-IDF
 
+    // loại bỏ stop_words
+    private static final Set<String> VIETNAMESE_STOPWORDS = Set.of(
+            "là", "và", "của", "có", "cho", "trên", "đã", "rằng", "này", "một", "những", "với", "thì", "cũng",
+            "khi", "được", "đến", "đi", "ở", "ra", "về", "nên", "nữa", "rất", "đâu", "ai", "em", "anh", "ta",
+            "tôi", "mình", "cái", "nó", "gì", "đó", "này", "kia", "thôi", "như", "nhưng"
+    );
+
+
     @PostConstruct
     public void init() throws IOException {
         directory = new RAMDirectory();
@@ -47,6 +55,21 @@ public class SongVectorService {
             combinedText.append(song.getTitle()).append(" ");
             if (song.getArtist() != null) combinedText.append(song.getArtist().getName()).append(" ");
             if (song.getGenre() != null) combinedText.append(song.getGenre().getName());
+            if (song.getLyrics() != null) {
+                String[] rawWords = song.getLyrics().split("\\s+");
+                List<String> filteredWords = new ArrayList<>();
+
+                for (String word : rawWords) {
+                    String cleaned = word.toLowerCase().replaceAll("[^\\p{L}\\p{Nd}]", "");
+                    if (!cleaned.isBlank() && !VIETNAMESE_STOPWORDS.contains(cleaned)) {
+                        filteredWords.add(cleaned);
+                    }
+                    if (filteredWords.size() >= 300) break; // giới hạn 300 từ
+                }
+
+                String cleanedLyrics = String.join(" ", filteredWords);
+                combinedText.append(" ").append(cleanedLyrics);
+            }
 
             // Dùng field "content" để chứa toàn bộ văn bản
             doc.add(new TextField("content", combinedText.toString(), Field.Store.YES));

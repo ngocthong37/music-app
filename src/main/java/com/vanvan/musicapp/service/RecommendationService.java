@@ -141,7 +141,6 @@ public class RecommendationService {
             allFavorites.forEach(fav -> otherUsers.add(fav.getUser().getId()));
             otherUsers.remove(userId);
 
-            // Tính độ tương đồng
             Map<Integer, Double> userSimilarity = new HashMap<>();
             for (Integer otherUserId : otherUsers) {
                 Set<Integer> otherUserSongIds = new HashSet<>();
@@ -162,6 +161,7 @@ public class RecommendationService {
                     }
                 }
 
+                // Tính độ tương đồng
                 double similarity = songVectorService.calculatePearsonCorrelation(targetUserVector, otherUserVector);
                 userSimilarity.put(otherUserId, similarity);
             }
