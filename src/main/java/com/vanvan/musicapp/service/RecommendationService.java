@@ -96,77 +96,35 @@ public class RecommendationService {
         }
     }
 
-
     public ResponseObject getCollaborativeRecommendations(Integer userId, int limit) {
         try {
-            // Chỉ lấy dữ liệu cần thiết
-            List<ListeningCount> allListeningCounts = listeningCountRepository.findByUserIdIn(
-                    Stream.concat(
-                            Stream.of(userId),
-                            favoriteRepository.findAll().stream().map(fav -> fav.getUser().getId())
-                    ).collect(Collectors.toSet())
-            );
-            List<Favorite> allFavorites = favoriteRepository.findByUserIdIn(
-                    Stream.concat(
-                            Stream.of(userId),
-                            allListeningCounts.stream().map(ListeningCount::getUserId)
-                    ).collect(Collectors.toSet())
-            );
+            // 1. Lấy toàn bộ dữ liệu cần thiết
+            Set<Integer> allUserIds = new HashSet<>();
+            allUserIds.add(userId);
+            allUserIds.addAll(favoriteRepository.findAll().stream().map(fav -> fav.getUser().getId()).collect(Collectors.toSet()));
+            List<ListeningCount> allListeningCounts = listeningCountRepository.findByUserIdIn(allUserIds);
+            List<Favorite> allFavorites = favoriteRepository.findByUserIdIn(allUserIds);
 
+            // 2. Lấy vector bài hát (TF-IDF)
             Map<Integer, Map<String, Double>> songVectors = songVectorService.getSongVectors();
 
-            // Lấy danh sách bài hát user đã tương tác
-            Set<Integer> targetUserSongIds = new HashSet<>();
-            allListeningCounts.stream()
-                    .filter(lc -> lc.getUserId().equals(userId))
-                    .forEach(lc -> targetUserSongIds.add(lc.getSongId()));
-            allFavorites.stream()
-                    .filter(fav -> fav.getUser().getId().equals(userId))
-                    .forEach(fav -> targetUserSongIds.add(fav.getSong().getId()));
+            // 3. Tạo rating ngầm cho user mục tiêu
+            Map<Integer, Double> targetRatingMap = buildUserRatingMap(userId, allListeningCounts, allFavorites);
+            Map<String, Double> targetUserVector = buildWeightedUserVector(targetRatingMap, songVectors);
 
-            // Tạo vector người dùng mục tiêu (chuẩn hóa)
-            Map<String, Double> targetUserVector = new HashMap<>();
-            for (Integer songId : targetUserSongIds) {
-                Map<String, Double> songVec = songVectors.get(songId);
-                if (songVec != null) {
-                    for (Map.Entry<String, Double> e : songVec.entrySet()) {
-                        targetUserVector.merge(e.getKey(), e.getValue() / targetUserSongIds.size(), Double::sum);
-                    }
-                }
-            }
+            // 4. Tìm các user khác
+            Set<Integer> otherUsers = allUserIds.stream().filter(id -> !id.equals(userId)).collect(Collectors.toSet());
 
-            // Lấy các người dùng khác
-            Set<Integer> otherUsers = new HashSet<>();
-            allListeningCounts.forEach(lc -> otherUsers.add(lc.getUserId()));
-            allFavorites.forEach(fav -> otherUsers.add(fav.getUser().getId()));
-            otherUsers.remove(userId);
-
+            // 5. Tính độ tương đồng giữa user hiện tại và các user khác
             Map<Integer, Double> userSimilarity = new HashMap<>();
             for (Integer otherUserId : otherUsers) {
-                Set<Integer> otherUserSongIds = new HashSet<>();
-                allListeningCounts.stream()
-                        .filter(lc -> lc.getUserId().equals(otherUserId))
-                        .forEach(lc -> otherUserSongIds.add(lc.getSongId()));
-                allFavorites.stream()
-                        .filter(fav -> fav.getUser().getId().equals(otherUserId))
-                        .forEach(fav -> otherUserSongIds.add(fav.getSong().getId()));
-
-                Map<String, Double> otherUserVector = new HashMap<>();
-                for (Integer songId : otherUserSongIds) {
-                    Map<String, Double> songVec = songVectors.get(songId);
-                    if (songVec != null) {
-                        for (Map.Entry<String, Double> e : songVec.entrySet()) {
-                            otherUserVector.merge(e.getKey(), e.getValue() / otherUserSongIds.size(), Double::sum);
-                        }
-                    }
-                }
-
-                // Tính độ tương đồng
+                Map<Integer, Double> otherRatingMap = buildUserRatingMap(otherUserId, allListeningCounts, allFavorites);
+                Map<String, Double> otherUserVector = buildWeightedUserVector(otherRatingMap, songVectors);
                 double similarity = songVectorService.calculatePearsonCorrelation(targetUserVector, otherUserVector);
                 userSimilarity.put(otherUserId, similarity);
             }
 
-            // Lấy top 5 user tương tự (chỉ lấy similarity dương)
+            // 6. Chọn top 5 user tương tự
             List<Integer> similarUsers = userSimilarity.entrySet().stream()
                     .filter(entry -> entry.getValue() > 0)
                     .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
@@ -174,25 +132,21 @@ public class RecommendationService {
                     .map(Map.Entry::getKey)
                     .toList();
 
-            // Lấy bài hát gợi ý từ các user tương tự
-            Set<Integer> interactedSongs = new HashSet<>(targetUserSongIds);
+            // 7. Lấy danh sách bài hát user đã tương tác
+            Set<Integer> interactedSongs = targetRatingMap.keySet();
+
+            // 8. Lấy bài hát từ các user tương tự
             Set<Integer> recommendedSongIds = new HashSet<>();
-
             for (Integer similarUserId : similarUsers) {
-                allListeningCounts.stream()
-                        .filter(lc -> lc.getUserId().equals(similarUserId))
-                        .map(ListeningCount::getSongId)
-                        .filter(songId -> !interactedSongs.contains(songId))
-                        .forEach(recommendedSongIds::add);
-
-                allFavorites.stream()
-                        .filter(fav -> fav.getUser().getId().equals(similarUserId))
-                        .map(fav -> fav.getSong().getId())
-                        .filter(songId -> !interactedSongs.contains(songId))
-                        .forEach(recommendedSongIds::add);
+                Map<Integer, Double> similarRatingMap = buildUserRatingMap(similarUserId, allListeningCounts, allFavorites);
+                for (Integer songId : similarRatingMap.keySet()) {
+                    if (!interactedSongs.contains(songId)) {
+                        recommendedSongIds.add(songId);
+                    }
+                }
             }
 
-            // Trả về danh sách gợi ý
+            // 9. Trả về danh sách bài hát gợi ý
             List<SongResponse> recommendedSongs = recommendedSongIds.stream()
                     .map(songId -> songRepository.findById(songId).orElse(null))
                     .filter(Objects::nonNull)
@@ -200,17 +154,18 @@ public class RecommendationService {
                     .limit(limit)
                     .toList();
 
-            // Bổ sung bài hát phổ biến nếu thiếu
+            // 10. Bổ sung bài hát phổ biến nếu thiếu
             if (recommendedSongs.size() < limit) {
                 List<Object[]> topSongs = listeningCountRepository.findTopSongsByListenCount();
                 List<SongResponse> popularSongs = topSongs.stream()
                         .map(obj -> (Integer) obj[0])
+                        .filter(songId -> !interactedSongs.contains(songId))
                         .map(songId -> songRepository.findById(songId).orElse(null))
                         .filter(Objects::nonNull)
-                        .filter(song -> !interactedSongs.contains(song.getId()))
                         .map(utilsService::convertToSongResponse)
                         .limit(limit - recommendedSongs.size())
                         .toList();
+
                 recommendedSongs = new ArrayList<>(recommendedSongs);
                 recommendedSongs.addAll(popularSongs);
             }
@@ -220,6 +175,47 @@ public class RecommendationService {
         } catch (Exception e) {
             return new ResponseObject("error", "Failed to generate recommendations: " + e.getMessage(), null);
         }
+    }
+
+    // Tạo bản đồ rating ngầm từ listening và favorite
+    private Map<Integer, Double> buildUserRatingMap(Integer userId, List<ListeningCount> listeningCounts, List<Favorite> favorites) {
+        Map<Integer, Double> ratingMap = new HashMap<>();
+
+        // Gán từ listening count
+        listeningCounts.stream()
+                .filter(lc -> lc.getUserId().equals(userId))
+                .forEach(lc -> {
+                    int count = lc.getCount();
+                    double rating = (count >= 10) ? 4.0 : (count >= 5) ? 3.0 : (count >= 1) ? 2.0 : 0.0;
+                    ratingMap.put(lc.getSongId(), rating);
+                });
+
+        // Gán từ favorite (ưu tiên hơn)
+        favorites.stream()
+                .filter(fav -> fav.getUser().getId().equals(userId))
+                .forEach(fav -> ratingMap.put(fav.getSong().getId(), 5.0));
+
+        return ratingMap;
+    }
+
+    // Tạo vector người dùng với trọng số dựa trên rating
+    private Map<String, Double> buildWeightedUserVector(Map<Integer, Double> ratingMap, Map<Integer, Map<String, Double>> songVectors) {
+        Map<String, Double> userVector = new HashMap<>();
+
+        for (Map.Entry<Integer, Double> entry : ratingMap.entrySet()) {
+            Integer songId = entry.getKey();
+            Double rating = entry.getValue();
+            Map<String, Double> songVector = songVectors.get(songId);
+            if (songVector == null) continue;
+
+            for (Map.Entry<String, Double> e : songVector.entrySet()) {
+                String feature = e.getKey();
+                double weighted = e.getValue() * rating;
+                userVector.merge(feature, weighted, Double::sum);
+            }
+        }
+
+        return userVector;
     }
 
 
