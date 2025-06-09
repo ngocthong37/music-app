@@ -29,7 +29,7 @@ public class SongVectorService {
 
     // loại bỏ stop_words
     private static final Set<String> VIETNAMESE_STOPWORDS = Set.of(
-            "là", "và", "của", "có", "cho", "trên", "đã", "rằng", "này", "một", "những", "với", "thì", "cũng",
+            "là", "và", "của", "có", "cho", "trên", "đã", "rằng", "một", "những", "với", "thì", "cũng",
             "khi", "được", "đến", "đi", "ở", "ra", "về", "nên", "nữa", "rất", "đâu", "ai", "em", "anh", "ta",
             "tôi", "mình", "cái", "nó", "gì", "đó", "này", "kia", "thôi", "như", "nhưng"
     );
